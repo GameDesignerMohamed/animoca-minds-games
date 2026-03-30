@@ -154,7 +154,7 @@
     </div>
 
     <div id="controls">
-        <button class="btn" id="btn-scan">SCAN [PROBE]</button>
+        <button class="btn" id="btn-scan">SCAN [3]</button>
         <button class="btn" id="btn-pass">PASS</button>
         <button class="btn btn-ship" id="btn-ship">SHIP [COMMIT]</button>
     </div>
@@ -168,7 +168,11 @@
             { name: 'AMBER', hex: 0xffaa00 },
             { name: 'WHITE', hex: 0xffffff }
         ];
-        const SIZES = [0.6, 1.0, 1.4];
+        const SIZES = [
+            { name: 'SMALL', val: 0.6 },
+            { name: 'MEDIUM', val: 1.0 },
+            { name: 'LARGE', val: 1.4 }
+        ];
         const SHAPES = ['BOX', 'SPHERE', 'CRYSTAL'];
         const MATERIALS = ['MATTE', 'METALLIC', 'GLASS'];
         const MOTIONS = ['STATIC', 'BOBBING'];
@@ -177,7 +181,7 @@
             level: 1, hp: 5, credits: 0, streak: 0,
             active: false, scanning: false, transitioning: false,
             currentRule: null, currentPkg: null,
-            scans: 0,
+            scans: 0, maxScans: 3,
             particles: [], shake: 0
         };
 
@@ -241,7 +245,7 @@
             const prop = props[Math.floor(Math.random() * props.length)];
             let value;
             if (prop === 'color') value = COLORS[Math.floor(Math.random() * COLORS.length)].name;
-            else if (prop === 'size') value = SIZES[Math.floor(Math.random() * SIZES.length)];
+            else if (prop === 'size') value = SIZES[Math.floor(Math.random() * SIZES.length)].name;
             else if (prop === 'shape') value = SHAPES[Math.floor(Math.random() * SHAPES.length)];
             else if (prop === 'material') value = MATERIALS[Math.floor(Math.random() * MATERIALS.length)];
             else value = MOTIONS[Math.floor(Math.random() * MOTIONS.length)];
@@ -272,7 +276,7 @@
             else { mat.metalness = 0; mat.roughness = 0.9; }
 
             const mesh = new THREE.Mesh(geo, mat);
-            mesh.scale.setScalar(data.size);
+            mesh.scale.setScalar(data.size.val);
             mesh.position.set(0, 0, -20); // Spawn far back
             scene.add(mesh);
 
@@ -284,7 +288,7 @@
             const rule = state.currentRule;
             let val;
             if (rule.prop === 'color') val = pkg.data.color.name;
-            else if (rule.prop === 'size') val = pkg.data.size;
+            else if (rule.prop === 'size') val = pkg.data.size.name;
             else if (rule.prop === 'shape') val = pkg.data.shape;
             else if (rule.prop === 'material') val = pkg.data.material;
             else if (rule.prop === 'motion') val = pkg.data.motion;
@@ -301,7 +305,8 @@
 
         function updateUI() {
             document.getElementById('val-level').textContent = `LEVEL ${state.level}`;
-            document.getElementById('val-scans').textContent = `${state.scans} SCANS`;
+            const scansLeft = state.maxScans - state.scans;
+            document.getElementById('val-scans').textContent = `${scansLeft} / ${state.maxScans} SCANS`;
             document.getElementById('txt-hp').textContent = `${state.hp}/5`;
             document.getElementById('hp-fill').style.width = `${(state.hp / 5) * 100}%`;
             
@@ -309,7 +314,9 @@
             document.getElementById('txt-credits').textContent = `${state.credits} • ${state.streak} / ${goal}`;
             document.getElementById('prog-fill').style.width = `${(state.streak / goal) * 100}%`;
 
-            document.getElementById('btn-scan').disabled = state.transitioning;
+            const scanBtn = document.getElementById('btn-scan');
+            scanBtn.disabled = state.transitioning || state.scans >= state.maxScans;
+            scanBtn.textContent = scansLeft > 0 ? `SCAN [${scansLeft}]` : 'NO SCANS';
             document.getElementById('btn-pass').disabled = state.transitioning;
             document.getElementById('btn-ship').disabled = state.transitioning;
 
@@ -323,7 +330,7 @@
             
             const cats = [
                 { id: 'color', label: 'Color', items: COLORS.map(c => c.name) },
-                { id: 'size', label: 'Size', items: SIZES },
+                { id: 'size', label: 'Size', items: SIZES.map(s => s.name) },
                 { id: 'shape', label: 'Shape', items: SHAPES },
                 { id: 'material', label: 'Material', items: MATERIALS },
                 { id: 'motion', label: 'Motion', items: MOTIONS }
@@ -363,6 +370,7 @@
             log(`LEVEL ${state.level} CLEAR. Rule was: ${state.currentRule.text}`, 'clear');
             state.level++;
             state.streak = 0;
+            state.scans = 0;
             state.currentRule = generateRule();
             updateUI();
         }
@@ -409,14 +417,18 @@
         };
 
         document.getElementById('btn-scan').onclick = () => {
-            if (!state.active || state.transitioning) return;
+            if (!state.active || state.transitioning || state.scans >= state.maxScans) return;
             state.scans++;
             const flagged = checkMatch(state.currentPkg);
             playSfx(flagged ? 150 : 800, 'sine', 0.2);
             const d = state.currentPkg.data;
             const unlocked = getUnlockedProps(state.level);
             let desc = [];
-            unlocked.forEach(p => desc.push(`${p.toUpperCase()}:${p === 'color' ? d.color.name : d[p]}`));
+            unlocked.forEach(p => {
+                if (p === 'color') desc.push(`COLOR:${d.color.name}`);
+                else if (p === 'size') desc.push(`SIZE:${d.size.name}`);
+                else desc.push(`${p.toUpperCase()}:${d[p]}`);
+            });
             log(`SCAN [${flagged ? 'FLAGGED' : 'CLEAR'}]: ${desc.join(' ')}`, flagged ? 'flagged' : 'clear');
             updateUI();
         };
