@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Cipher</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+
+    <style>
+        :root {
+            --bg: #0a0a0c;
+            --ui-bg: rgba(15, 15, 20, 0.9);
+            --accent: #00ffaa;
+            --danger: #ff4444;
+            --warning: #ffcc00;
+            --text: #e0e0e0;
+            --panel-border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'JetBrains Mono', monospace;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        canvas { display: block; }
+
+        /* Overlay / Tutorial */
+        #overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(5, 5, 7, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            z-index: 1000;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .tut-card {
+            background: var(--ui-bg);
+            border: 2px solid var(--accent);
+            padding: 40px;
+            border-radius: 12px;
+            max-width: 620px;
+            box-shadow: 0 0 50px rgba(0, 255, 170, 0.1);
+        }
+
+        .tut-card h1 {
+            color: var(--accent);
+            margin-top: 0;
+            font-size: 2em;
+            letter-spacing: 2px;
+        }
+
+        .tut-card p {
+            line-height: 1.6;
+            font-size: 1.1em;
+            margin-bottom: 30px;
+            color: #aaa;
+            text-align: left;
+        }
+
+        .tut-card strong { color: var(--text); }
+
+        .start-btn {
+            background: var(--accent);
+            color: #000;
+            border: none;
+            padding: 18px 50px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 1.2em;
+            transition: all 0.2s;
+            box-shadow: 0 4px 0 #00aa77;
+        }
+
+        .start-btn:hover { background: #33ffbb; transform: translateY(-2px); }
+        .start-btn:active { transform: translateY(2px); box-shadow: 0 0 0 transparent; }
+
+        /* HUD Panels */
+        .panel {
+            position: absolute;
+            background: var(--ui-bg);
+            border: var(--panel-border);
+            border-radius: 6px;
+            padding: 15px;
+            pointer-events: none;
+        }
+
+        #hud-top-left { top: 20px; left: 20px; width: 260px; }
+
+        .stat {
+            font-size: 1.1em;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .stat-label { color: #888; font-size: 0.8em; }
+
+        #hp-bar-container {
+            width: 100%;
+            height: 6px;
+            background: #222;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        #hp-bar {
+            height: 100%;
+            width: 100%;
+            background: var(--accent);
+            transition: width 0.3s, background-color 0.3s;
+        }
+
+        /* HP pulse on breach */
+        @keyframes hpPulse {
+            0% { transform: scaleY(1); filter: drop-shadow(0 0 0 rgba(255, 68, 68, 0)); }
+            25% { transform: scaleY(1.8); filter: drop-shadow(0 0 10px rgba(255, 68, 68, 0.6)); }
+            50% { transform: scaleY(1); filter: drop-shadow(0 0 0 rgba(255, 68, 68, 0)); }
+            75% { transform: scaleY(1.6); filter: drop-shadow(0 0 12px rgba(255, 68, 68, 0.7)); }
+            100% { transform: scaleY(1); filter: drop-shadow(0 0 0 rgba(255, 68, 68, 0)); }
+        }
+
+        #hp-bar-container.hp-pulse {
+            transform-origin: left center;
+            animation: hpPulse 0.6s ease-out 0s 1;
+        }
+
+        /* Level progress */
+        .subtle {
+            font-size: 0.75em;
+            color: #8e8e8e;
+            margin-top: 10px;
+            line-height: 1.35;
+        }
+
+        #progress-label {
+            margin-top: 10px;
+            color: #8e8e8e;
+            font-size: 0.75em;
+            letter-spacing: 0.5px;
+        }
+
+        #progress-container {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.07);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 6px;
+        }
+
+        #progress-bar {
+            height: 100%;
+            width: 0%;
+            background: var(--warning);
+            transition: width 0.25s ease;
+        }
+
+        #hud-top-right { top: 20px; right: 20px; text-align: right; }
+
+        #queue-display {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            justify-content: flex-end;
+        }
+
+        .queue-item {
+            width: 35px;
+            height: 35px;
+            border: 1px solid #333;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.03);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .queue-item svg {
+            width: 18px;
+            height: 18px;
+            display: block;
+        }
+
+
+        /* Evidence Board */
+        #evidence-board { bottom: 140px; left: 20px; width: 240px; max-height: 250px; overflow: hidden; }
+
+        .evidence-header {
+            font-size: 0.8em;
+            color: var(--accent);
+            border-bottom: 1px solid #333;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .log-entry {
+            font-size: 0.85em;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .log-icon { width: 12px; height: 12px; border-radius: 2px; flex-shrink: 0; }
+        .log-status-flagged { color: var(--danger); font-weight: bold; }
+        .log-status-clear { color: var(--accent); }
+
+        /* Controls */
+        #controls {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            z-index: 100;
+        }
+
+        .btn {
+            background: var(--ui-bg);
+            color: var(--text);
+            border: 1px solid #444;
+            padding: 18px 30px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: bold;
+            min-width: 150px;
+            transition: all 0.2s;
+            font-family: 'JetBrains Mono', monospace;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            pointer-events: auto;
+        }
+
+        .btn:hover:not(:disabled) {
+            border-color: var(--accent);
+            background: rgba(0, 255, 170, 0.05);
+            color: #fff;
+        }
+
+        .btn:active:not(:disabled) { transform: scale(0.95); }
+        .btn:disabled { opacity: 0.2; cursor: not-allowed; filter: grayscale(1); }
+        .btn-scan { border-color: var(--warning); color: var(--warning); }
+        .btn-ship { border-color: var(--accent); color: var(--accent); }
+        .btn-pass { border-color: #666; color: #888; }
+
+        /* Feedback / Timer */
+        #feedback {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 4em;
+            font-weight: 900;
+            pointer-events: none;
+            opacity: 0;
+            text-shadow: 0 0 30px rgba(0, 0, 0, 1);
+            transition: opacity 0.15s;
+            z-index: 50;
+        }
+
+        #timer-container {
+            position: absolute;
+            top: 110px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        #timer-bar {
+            width: 100%;
+            height: 100%;
+            background: var(--warning);
+            transition: width 0.1s linear;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-15px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Fullscreen flash overlay (breach) */
+        #flash-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 0, 0, 0.0);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 900;
+            transition: opacity 0.12s ease;
+        }
+
+        /* Game Over Overlay */
+        #gameover-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(5, 5, 7, 0.94);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            z-index: 1100;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .gameover-card {
+            background: var(--ui-bg);
+            border: 2px solid var(--danger);
+            padding: 34px;
+            border-radius: 12px;
+            max-width: 720px;
+            width: min(720px, 92vw);
+            box-shadow: 0 0 60px rgba(255, 68, 68, 0.12);
+        }
+
+        .gameover-card h2 {
+            margin: 0 0 12px 0;
+            letter-spacing: 2px;
+            color: var(--danger);
+        }
+
+        .gameover-card .meta {
+            color: #b5b5b5;
+            margin-bottom: 18px;
+            line-height: 1.6;
+        }
+
+        .rule-reveal {
+            margin-top: 10px;
+            color: #ffffff;
+            font-weight: 700;
+            line-height: 1.6;
+        }
+
+        .restart-btn {
+            margin-top: 22px;
+            background: var(--danger);
+            color: #0b0b0e;
+            border: none;
+            padding: 14px 34px;
+            font-weight: 800;
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 1.05em;
+            transition: transform 0.15s;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: 1px;
+        }
+
+        .restart-btn:active { transform: scale(0.98); }
+
+        /* Mobile Adjustments */
+        @media (max-width: 768px) {
+            #controls {
+                bottom: 20px;
+                gap: 10px;
+                width: 90%;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            .btn { min-width: 100px; padding: 12px 15px; font-size: 0.9em; }
+            #evidence-board { display: none; }
+            .tut-card { padding: 20px; }
+            #hud-top-left { width: 240px; }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="flash-overlay"></div>
+
+    <div id="overlay">
+        <div class="tut-card">
+            <h1>CIPHER</h1>
+            <p>
+                Packages are rolling in. Some are <strong>CONTRABAND</strong> flagged by a hidden system rule.<br /><br />
+                <strong>SCAN</strong> to reveal if a package is flagged.<br />
+                <strong>SHIP</strong> to earn credits. Flagged items damage the system.<br />
+                <strong>PASS</strong> to ignore and wait for the next unit.
+            </p>
+            <button class="start-btn" id="start-btn">INITIALIZE SYSTEM</button>
+        </div>
+    </div>
+
+    <div id="gameover-overlay">
+        <div class="gameover-card">
+            <h2>SYSTEM CRITICAL FAILURE</h2>
+            <div class="meta" id="gameover-meta">FINAL SCORE: 0</div>
+            <div class="rule-reveal" id="rule-reveal">The hidden rule was: ...</div>
+            <button class="restart-btn" id="restart-btn">RESTART</button>
+        </div>
+    </div>
+
+    <div id="hud-top-left" class="panel">
+        <div class="stat"><span class="stat-label">STATUS</span> <span>LEVEL <span id="val-level">1</span></span></div>
+        <div class="stat"><span class="stat-label">CREDITS</span> <span id="val-score">0 / 75</span></div>
+
+        <div id="progress-label">LEVEL PROGRESS</div>
+        <div id="progress-container"><div id="progress-bar"></div></div>
+
+        <div id="hp-bar-container"><div id="hp-bar"></div></div>
+        <div class="subtle" id="hud-hint">BREACH: -20HP | TIMEOUT: -15HP</div>
+    </div>
+
+    <div id="hud-top-right" class="panel">
+        <div class="stat-label">QUEUE</div>
+        <div id="queue-display"></div>
+    </div>
+
+    <div id="evidence-board" class="panel">
+        <div class="evidence-header">DEDUCTION LOG</div>
+        <div id="log-list"></div>
+    </div>
+
+    <div id="timer-container"><div id="timer-bar"></div></div>
+    <div id="feedback"></div>
+
+    <div id="controls">
+        <button class="btn btn-scan" id="btn-scan">SCAN [5]</button>
+        <button class="btn btn-pass" id="btn-pass">PASS</button>
+        <button class="btn btn-ship" id="btn-ship">SHIP</button>
+    </div>
+
+    <script async src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"></script>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+
+        // --- CONFIG & STATE ---
+        const COLORS = [0x00ffaa, 0xff00ff, 0x00aaff, 0xffaa00, 0xffffff];
+        const SIZES = [0.6, 1.0, 1.4];
+        const SHAPES = ['BOX', 'SPHERE', 'CRYSTAL'];
+
+        const COLOR_NAMES = {
+            0x00ffaa: 'MINT',
+            0xff00ff: 'MAGENTA',
+            0x00aaff: 'CYAN',
+            0xffaa00: 'AMBER',
+            0xffffff: 'WHITE'
+        };
+
+        const SIZE_NAMES = {
+            0.6: 'SMALL',
+            1.0: 'MEDIUM',
+            1.4: 'LARGE'
+        };
+
+        const state = {
+            level: 1,
+            score: 0,
+            hp: 100,
+            scansLeft: 5,
+            active: false,
+            currentPackage: null,
+            queue: [],
+            hiddenRule: null,
+            timer: 10.0,
+            maxTimer: 10.0,
+            beltSpeed: 0.1,
+            processing: false,
+            initialized: false,
+            particles: [],
+            shakeTime: 0,
+            shakeStrength: 0.12
+        };
+
+        function goalForLevel(level) {
+            return level * 75;
+        }
+
+        function clamp01(x) {
+            return Math.max(0, Math.min(1, x));
+        }
+
+        function hexFromColorInt(c) {
+            return '#' + c.toString(16).padStart(6, '0');
+        }
+
+        function shapeCode(shape) {
+            if (shape === 'BOX') return 'B';
+            if (shape === 'SPHERE') return 'S';
+            return 'I'; // CRYSTAL
+        }
+
+        function shapeLabel(shape) {
+            if (shape === 'BOX') return 'BOX';
+            if (shape === 'SPHERE') return 'SPHERE';
+            return 'CRYSTAL';
+        }
+
+        function ruleToRevealText(rule) {
+            if (!rule) return 'The hidden rule was: (unknown).';
+
+            let typeText = '';
+            let valueText = '';
+
+            if (rule.type === 'color') {
+                typeText = 'COLOR';
+                const name = COLOR_NAMES[rule.value] || hexFromColorInt(rule.value).toUpperCase();
+                valueText = name;
+            } else if (rule.type === 'size') {
+                typeText = 'SIZE';
+                valueText = SIZE_NAMES[rule.value] || String(rule.value);
+            } else {
+                typeText = 'SHAPE';
+                valueText = shapeLabel(rule.value);
+            }
+
+            return `The hidden rule was: ${typeText} ${valueText} items are flagged.`;
+        }
+
+        // --- THREE.JS SETUP ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x050507);
+        scene.fog = new THREE.Fog(0x050507, 15, 40);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 4, 12);
+        camera.lookAt(0, 0, 0);
+        const baseCamPos = camera.position.clone();
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        document.body.appendChild(renderer.domElement);
+
+        const clock = new THREE.Clock();
+
+        // Lighting
+        scene.add(new THREE.AmbientLight(0xffffff, 0.3));
+        const spot = new THREE.SpotLight(0xffffff, 20);
+        spot.position.set(0, 10, 5);
+        spot.angle = 0.5;
+        spot.penumbra = 0.5;
+        scene.add(spot);
+
+        const rim = new THREE.PointLight(0x00ffaa, 10, 20);
+        rim.position.set(-5, 2, -5);
+        scene.add(rim);
+
+        // Environment
+        const beltGeo = new THREE.BoxGeometry(6, 0.2, 200);
+        const beltMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
+        const belt = new THREE.Mesh(beltGeo, beltMat);
+        belt.position.y = -0.5;
+        scene.add(belt);
+
+        const scannerFrame = new THREE.Group();
+        const f1 = new THREE.Mesh(new THREE.BoxGeometry(0.2, 4, 0.2), new THREE.MeshStandardMaterial({ color: 0x333333 }));
+        f1.position.set(-2.5, 2, 0);
+        const f2 = f1.clone();
+        f2.position.x = 2.5;
+        const f3 = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.2, 0.2), new THREE.MeshStandardMaterial({ color: 0x333333 }));
+        f3.position.set(0, 4, 0);
+        scannerFrame.add(f1, f2, f3);
+        scene.add(scannerFrame);
+
+        // --- AUDIO ---
+        let audioCtx;
+        function playSfx(freq, type, dur, vol = 0.1) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            g.gain.setValueAtTime(vol, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+            osc.connect(g);
+            g.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + dur);
+        }
+
+        // --- UI FX ---
+        function triggerFlash(color = 'rgba(255,0,0,0.75)', peakOpacity = 0.55) {
+            const flash = document.getElementById('flash-overlay');
+            flash.style.background = color;
+            flash.style.opacity = String(peakOpacity);
+            // allow transition back out
+            setTimeout(() => {
+                flash.style.opacity = '0';
+            }, 120);
+        }
+
+        function pulseHpBar() {
+            const el = document.getElementById('hp-bar-container');
+            el.classList.remove('hp-pulse');
+            // Force reflow to restart animation
+            void el.offsetWidth;
+            el.classList.add('hp-pulse');
+            setTimeout(() => el.classList.remove('hp-pulse'), 650);
+        }
+
+        function showFeed(txt, color, durationMs = 800) {
+            const el = document.getElementById('feedback');
+            el.innerText = txt;
+            el.style.color = color;
+            el.style.opacity = '1';
+            setTimeout(() => {
+                el.style.opacity = '0';
+            }, durationMs);
+        }
+
+        function startShake(timeSec = 0.5, strength = 0.12) {
+            state.shakeTime = Math.max(state.shakeTime, timeSec);
+            state.shakeStrength = strength;
+        }
+
+        // --- PARTICLES (Success Burst) ---
+        function spawnSuccessBurst(worldPos) {
+            const count = 70;
+            const positions = new Float32Array(count * 3);
+            const velocities = new Float32Array(count * 3);
+
+            for (let i = 0; i < count; i++) {
+                positions[i * 3 + 0] = worldPos.x;
+                positions[i * 3 + 1] = worldPos.y;
+                positions[i * 3 + 2] = worldPos.z;
+
+                // random direction
+                const vx = (Math.random() * 2 - 1);
+                const vy = (Math.random() * 2 - 1);
+                const vz = (Math.random() * 2 - 1);
+                const len = Math.max(0.0001, Math.sqrt(vx * vx + vy * vy + vz * vz));
+
+                const speed = 1.8 + Math.random() * 2.8;
+                velocities[i * 3 + 0] = (vx / len) * speed;
+                velocities[i * 3 + 1] = (vy / len) * speed;
+                velocities[i * 3 + 2] = (vz / len) * speed;
+            }
+
+            const geo = new THREE.BufferGeometry();
+            geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+            const mat = new THREE.PointsMaterial({
+                color: 0x00ffaa,
+                size: 0.14,
+                transparent: true,
+                opacity: 1.0,
+                depthWrite: false
+            });
+
+            const points = new THREE.Points(geo, mat);
+            scene.add(points);
+
+            state.particles.push({
+                points,
+                velocities,
+                life: 0.55,
+                maxLife: 0.55
+            });
+        }
+
+        function updateParticles(dt) {
+            if (state.particles.length === 0) return;
+
+            for (let i = state.particles.length - 1; i >= 0; i--) {
+                const p = state.particles[i];
+                p.life -= dt;
+
+                const geo = p.points.geometry;
+                const attr = geo.getAttribute('position');
+                const arr = attr.array;
+
+                // basic movement + slight gravity
+                for (let j = 0; j < arr.length; j += 3) {
+                    arr[j + 0] += p.velocities[j + 0] * dt;
+                    arr[j + 1] += p.velocities[j + 1] * dt - (1.8 * dt * dt);
+                    arr[j + 2] += p.velocities[j + 2] * dt;
+
+                    // damp
+                    p.velocities[j + 0] *= (1.0 - 1.5 * dt);
+                    p.velocities[j + 1] *= (1.0 - 1.5 * dt);
+                    p.velocities[j + 2] *= (1.0 - 1.5 * dt);
+                }
+
+                attr.needsUpdate = true;
+
+                const t = clamp01(p.life / p.maxLife);
+                p.points.material.opacity = t;
+                p.points.material.size = 0.10 + (1.0 - t) * 0.10;
+
+                if (p.life <= 0) {
+                    scene.remove(p.points);
+                    p.points.geometry.dispose();
+                    p.points.material.dispose();
+                    state.particles.splice(i, 1);
+                }
+            }
+        }
+
+        // --- LOGIC ---
+        function generateRule() {
+            const types = ['color', 'size', 'shape'];
+            const type = types[Math.floor(Math.random() * types.length)];
+            let value;
+            if (type === 'color') value = COLORS[Math.floor(Math.random() * COLORS.length)];
+            else if (type === 'size') value = SIZES[Math.floor(Math.random() * SIZES.length)];
+            else value = SHAPES[Math.floor(Math.random() * SHAPES.length)];
+            return { type, value };
+        }
+
+        function isContraband(pkg) {
+            if (state.hiddenRule.type === 'color') return pkg.color === state.hiddenRule.value;
+            if (state.hiddenRule.type === 'size') return pkg.size === state.hiddenRule.value;
+            return pkg.shape === state.hiddenRule.value;
+        }
+
+        function createPkgData() {
+            return {
+                color: COLORS[Math.floor(Math.random() * COLORS.length)],
+                size: SIZES[Math.floor(Math.random() * SIZES.length)],
+                shape: SHAPES[Math.floor(Math.random() * SHAPES.length)]
+            };
+        }
+
+        function spawnMesh(data, z) {
+            let geo;
+            if (data.shape === 'BOX') geo = new THREE.BoxGeometry(1, 1, 1);
+            else if (data.shape === 'SPHERE') geo = new THREE.SphereGeometry(0.6, 24, 24);
+            else geo = new THREE.IcosahedronGeometry(0.7);
+
+            const mat = new THREE.MeshStandardMaterial({
+                color: data.color,
+                roughness: data.shape === 'SPHERE' ? 0.1 : 0.8,
+                metalness: data.shape === 'SPHERE' ? 0.8 : 0.2,
+                emissive: data.color,
+                emissiveIntensity: 0.1,
+                transparent: false,
+                opacity: 1.0
+            });
+
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.scale.set(data.size, data.size, data.size);
+            mesh.position.set(0, data.size * 0.5, z);
+            scene.add(mesh);
+            return { ...data, mesh, status: 'INBOUND', exit: null };
+        }
+
+        function shapeSvg(shape, fillHex) {
+            // 18x18 viewBox
+            if (shape === 'BOX') {
+                return `
+                    <svg viewBox="0 0 18 18" aria-hidden="true" focusable="false">
+                        <rect x="3" y="3" width="12" height="12" rx="2" fill="${fillHex}" />
+                    </svg>
+                `;
+            }
+            if (shape === 'SPHERE') {
+                return `
+                    <svg viewBox="0 0 18 18" aria-hidden="true" focusable="false">
+                        <circle cx="9" cy="9" r="6.5" fill="${fillHex}" />
+                    </svg>
+                `;
+            }
+            // CRYSTAL / diamond
+            return `
+                <svg viewBox="0 0 18 18" aria-hidden="true" focusable="false">
+                    <polygon points="9,2 16,9 9,16 2,9" fill="${fillHex}" />
+                </svg>
+            `;
+        }
+
+        function updateUI() {
+            const goal = goalForLevel(state.level);
+            document.getElementById('val-level').innerText = String(state.level);
+            document.getElementById('val-score').innerText = `${state.score} / ${goal}`;
+
+            const hpBar = document.getElementById('hp-bar');
+            hpBar.style.width = state.hp + '%';
+            hpBar.style.backgroundColor = state.hp < 30 ? 'var(--danger)' : 'var(--accent)';
+
+            const progress = clamp01(state.score / goal) * 100;
+            document.getElementById('progress-bar').style.width = `${progress}%`;
+
+            const scanBtn = document.getElementById('btn-scan');
+            scanBtn.innerText = state.scansLeft > 0 ? `SCAN [${state.scansLeft}]` : 'NO SCANS';
+            scanBtn.disabled = state.scansLeft <= 0 || state.processing || !state.active;
+            document.getElementById('btn-ship').disabled = state.processing || !state.active;
+            document.getElementById('btn-pass').disabled = state.processing || !state.active;
+
+            const qDisp = document.getElementById('queue-display');
+            qDisp.innerHTML = '';
+            state.queue.slice(0, 3).forEach(p => {
+                const item = document.createElement('div');
+                item.className = 'queue-item';
+                const hex = hexFromColorInt(p.color);
+                item.style.borderColor = hex;
+                item.innerHTML = shapeSvg(p.shape, hex);
+                qDisp.appendChild(item);
+            });
+        }
+
+        function logEvidence(pkg, flagged) {
+            const list = document.getElementById('log-list');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            const hex = hexFromColorInt(pkg.color);
+            const code = shapeCode(pkg.shape);
+            const sizeName = SIZE_NAMES[pkg.size] || String(pkg.size);
+            entry.innerHTML = `
+                <div class="log-icon" style="background:${hex}"></div>
+                <span style="flex:1">${code} sz:${sizeName}</span>
+                <span class="log-status-${flagged ? 'flagged' : 'clear'}">${flagged ? 'FLAG' : 'CLEAN'}</span>
+            `;
+            list.prepend(entry);
+            if (list.children.length > 6) list.removeChild(list.lastChild);
+        }
+
+        function disposePkg(pkg) {
+            if (!pkg || !pkg.mesh) return;
+            scene.remove(pkg.mesh);
+            pkg.mesh.geometry.dispose();
+            pkg.mesh.material.dispose();
+        }
+
+        function next() {
+            if (state.currentPackage) {
+                disposePkg(state.currentPackage);
+            }
+            const data = state.queue.shift();
+            state.queue.push(createPkgData());
+            state.currentPackage = spawnMesh(data, 20);
+            state.timer = state.maxTimer;
+            state.processing = false;
+
+            // Reset timer bar
+            document.getElementById('timer-bar').style.width = '100%';
+
+            updateUI();
+        }
+
+        function start() {
+            state.hiddenRule = generateRule();
+            state.scansLeft = 5;
+            state.maxTimer = Math.max(3.5, 12 - (state.level * 0.8));
+            state.beltSpeed = 0.08 + (state.level * 0.015);
+            state.queue = Array.from({ length: 5 }, createPkgData);
+            document.getElementById('log-list').innerHTML = '';
+            next();
+        }
+
+        function setGameActive(active) {
+            state.active = active;
+            updateUI();
+        }
+
+        function gameOver() {
+            setGameActive(false);
+            state.processing = true;
+
+            // Clean up current package visuals a bit
+            if (state.currentPackage?.mesh?.material) {
+                state.currentPackage.mesh.material.emissiveIntensity = 0.0;
+            }
+
+            const go = document.getElementById('gameover-overlay');
+            const meta = document.getElementById('gameover-meta');
+            const reveal = document.getElementById('rule-reveal');
+            meta.innerText = `FINAL SCORE: ${state.score} | LEVEL REACHED: ${state.level}`;
+            reveal.innerText = ruleToRevealText(state.hiddenRule);
+            go.style.display = 'flex';
+        }
+
+        // --- ACTIONS ---
+        function performScan() {
+            if (state.scansLeft <= 0 || state.processing || !state.active) return;
+            state.scansLeft--;
+            const flagged = isContraband(state.currentPackage);
+            playSfx(flagged ? 180 : 700, 'sine', 0.2);
+            state.currentPackage.mesh.material.emissiveIntensity = 3.0;
+            setTimeout(() => {
+                if (state.currentPackage) state.currentPackage.mesh.material.emissiveIntensity = 0.1;
+            }, 400);
+            logEvidence(state.currentPackage, flagged);
+            updateUI();
+        }
+
+        function performShip() {
+            if (state.processing || !state.active) return;
+            state.processing = true;
+            const flagged = isContraband(state.currentPackage);
+            if (flagged) {
+                state.hp -= 20;
+                showFeed('BREACH!', 'var(--danger)', 2000);
+                triggerFlash('rgba(255, 40, 40, 0.9)', 0.55);
+                pulseHpBar();
+                playSfx(80, 'sawtooth', 0.4, 0.2);
+                state.currentPackage.exit = 'EJECT';
+            } else {
+                state.score += 15;
+                showFeed('SHIPPED', 'var(--accent)', 850);
+                playSfx(900, 'sine', 0.1);
+
+                // Green particle burst at package position
+                spawnSuccessBurst(state.currentPackage.mesh.position.clone());
+
+                state.currentPackage.exit = 'SHIP';
+            }
+            checkState();
+            updateUI();
+        }
+
+        function performPass() {
+            if (state.processing || !state.active) return;
+            state.processing = true;
+            showFeed('PASSED', '#888', 700);
+            playSfx(300, 'sine', 0.1);
+
+            // Make the package look immediately "discarded" / ignored
+            const m = state.currentPackage.mesh.material;
+            m.color.setHex(0x777777);
+            m.emissive.setHex(0x000000);
+            m.transparent = true;
+            m.opacity = 0.35;
+
+            state.currentPackage.exit = 'SHIP';
+            checkState();
+            updateUI();
+        }
+
+        function checkState() {
+            if (state.hp <= 0) {
+                gameOver();
+                return;
+            }
+
+            const goal = goalForLevel(state.level);
+            if (state.score >= goal) {
+                state.level++;
+                showFeed(`SECURE: LVL ${state.level}`, 'var(--warning)', 900);
+                start();
+            }
+        }
+
+        // --- LOOP ---
+        function loop() {
+            requestAnimationFrame(loop);
+
+            const dt = Math.min(0.05, clock.getDelta());
+
+            updateParticles(dt);
+
+            if (!state.currentPackage) {
+                renderer.render(scene, camera);
+                return;
+            }
+
+            const pkg = state.currentPackage;
+
+            // Timer + timeout
+            if (state.active && pkg.status === 'WAITING' && !state.processing) {
+                state.timer -= dt;
+                const t = clamp01(state.timer / state.maxTimer) * 100;
+                document.getElementById('timer-bar').style.width = t + '%';
+
+                if (state.timer <= 0) {
+                    state.processing = true;
+                    pkg.exit = 'DROP';
+                    state.hp -= 15;
+                    showFeed('TIMED OUT', 'var(--warning)', 900);
+                    playSfx(120, 'square', 0.3);
+
+                    // Screen shake on timeout drop
+                    startShake(0.5, 0.16);
+
+                    checkState();
+                    updateUI();
+                }
+            }
+
+            // Movement Logic (scaled by dt)
+            const beltStep = state.beltSpeed * (dt / 0.016);
+            if (pkg.status === 'INBOUND') {
+                pkg.mesh.position.z -= beltStep;
+                if (pkg.mesh.position.z <= 0) {
+                    pkg.mesh.position.z = 0;
+                    pkg.status = 'WAITING';
+                }
+            } else if (pkg.exit) {
+                if (pkg.exit === 'SHIP') {
+                    pkg.mesh.position.z -= 0.4 * (dt / 0.016);
+
+                    // fade out
+                    const mat = pkg.mesh.material;
+                    mat.transparent = true;
+                    mat.opacity = Math.max(0, mat.opacity - 0.05 * (dt / 0.016));
+
+                    if (pkg.mesh.position.z < -10) next();
+                } else if (pkg.exit === 'EJECT') {
+                    pkg.mesh.position.y += 0.25 * (dt / 0.016);
+                    pkg.mesh.position.x += 0.1 * (dt / 0.016);
+                    pkg.mesh.rotation.z += 0.1 * (dt / 0.016);
+                    if (pkg.mesh.position.y > 8) next();
+                } else if (pkg.exit === 'DROP') {
+                    pkg.mesh.position.y -= 0.25 * (dt / 0.016);
+                    if (pkg.mesh.position.y < -5) next();
+                }
+            }
+
+            // Camera lerp
+            const tz = pkg.status === 'WAITING' ? 7 : 12;
+            baseCamPos.z += (tz - baseCamPos.z) * 0.04;
+            baseCamPos.x += (0 - baseCamPos.x) * 0.04;
+            baseCamPos.y += (4 - baseCamPos.y) * 0.04;
+
+            // Apply shake (timeout)
+            if (state.shakeTime > 0) {
+                state.shakeTime = Math.max(0, state.shakeTime - dt);
+                const strength = state.shakeStrength * (state.shakeTime / 0.5);
+                camera.position.set(
+                    baseCamPos.x + (Math.random() * 2 - 1) * strength,
+                    baseCamPos.y + (Math.random() * 2 - 1) * strength,
+                    baseCamPos.z + (Math.random() * 2 - 1) * strength
+                );
+            } else {
+                camera.position.copy(baseCamPos);
+            }
+
+            camera.lookAt(0, 0, 0);
+            renderer.render(scene, camera);
+        }
+
+        // --- INIT ---
+        document.getElementById('start-btn').onclick = () => {
+            if (state.initialized) return;
+            state.initialized = true;
+
+            document.getElementById('overlay').style.display = 'none';
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+            state.hp = 100;
+            state.level = 1;
+            state.score = 0;
+            state.processing = false;
+
+            setGameActive(true);
+            start();
+            updateUI();
+
+            // Reset camera base
+            baseCamPos.set(0, 4, 12);
+            loop();
+        };
+
+        document.getElementById('btn-scan').onclick = performScan;
+        document.getElementById('btn-ship').onclick = performShip;
+        document.getElementById('btn-pass').onclick = performPass;
+
+        document.getElementById('restart-btn').onclick = () => {
+            window.location.reload();
+        };
+
+        window.onresize = () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        };
+
+        // Initial UI draw (before init)
+        updateUI();
+    </script>
+</body>
+</html>

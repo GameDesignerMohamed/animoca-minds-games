@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Animoca Minds Games</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2310ACEB'/%3E%3Ctext x='16' y='22' font-family='monospace' font-size='16' font-weight='900' fill='%23131112' text-anchor='middle'%3EAM%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --accent:       #10ACEB;
+      --accent-dark:  #0D8FC4;
+      --secondary:    #F15738;
+      --secondary-dk: #C44429;
+      --bg-primary:   #131112;
+      --bg-secondary: #1D1A1B;
+      --bg-dark:      #0A0909;
+      --ink:          #F5F5F3;
+      --ink-secondary:#C5C5C3;
+      --ink-muted:    #A69080;
+      --border:       rgba(255,255,255,0.08);
+      --border-subtle:rgba(255,255,255,0.04);
+      --shadow-sm:    0 1px 3px rgba(0,0,0,.3), 0 1px 2px rgba(0,0,0,.2);
+      --shadow-md:    0 4px 24px rgba(0,0,0,.4);
+      --radius:       4px;
+      --green:        #00ffaa;
+      --green-bg:     rgba(0,255,170,0.08);
+      --orange:       #ffcc00;
+      --orange-bg:    rgba(255,204,0,0.08);
+      --fail:         #ff4444;
+      --fail-bg:      rgba(255,68,68,0.08);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg-dark);
+      color: var(--ink);
+      font-family: 'Poppins', system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    /* NAV */
+    .nav {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--bg-primary);
+      border-bottom: 1px solid var(--border);
+      height: 56px;
+      display: flex; align-items: center;
+      padding: 0 28px;
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none;
+    }
+    .nav-logo-badge {
+      background: var(--accent);
+      color: var(--bg-primary);
+      font-family: 'Space Mono', monospace;
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 0.05em;
+      padding: 4px 10px;
+      border-left: 3px solid var(--secondary);
+    }
+    .nav-logo-text {
+      color: var(--ink);
+      font-family: 'Space Mono', monospace;
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .nav-right {
+      margin-left: auto;
+      display: flex; align-items: center; gap: 20px;
+    }
+    .nav-right a {
+      color: var(--ink-muted);
+      text-decoration: none;
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      font-weight: 400;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      transition: color .15s;
+    }
+    .nav-right a:hover { color: var(--accent); }
+
+    /* HERO */
+    .hero {
+      background: var(--bg-primary);
+      padding: 56px 28px 80px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background:
+        radial-gradient(ellipse at 28% 42%, rgba(16,172,235,0.06) 0%, transparent 60%),
+        radial-gradient(ellipse at 72% 58%, rgba(241,87,56,0.04) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .hero-inner {
+      max-width: 960px;
+      margin: 0 auto;
+      position: relative;
+    }
+    .hero-eyebrow {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+    .hero h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: clamp(36px, 5vw, 56px);
+      font-weight: 900;
+      color: var(--ink);
+      letter-spacing: -0.025em;
+      line-height: 1.05;
+      margin-bottom: 16px;
+    }
+    .hero h1 em {
+      font-style: normal;
+      color: var(--ink-muted);
+    }
+    .hero-sub {
+      font-family: 'Poppins', sans-serif;
+      font-size: 15px;
+      color: var(--ink-secondary);
+      max-width: 480px;
+      line-height: 1.6;
+    }
+
+    /* WRAPPER */
+    .wrap {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 28px 80px;
+      transform: translateY(-36px);
+    }
+
+    /* STATS */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 40px;
+    }
+    .stat {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 20px 20px;
+    }
+    .stat-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      margin-bottom: 8px;
+    }
+    .stat-value {
+      font-family: 'Poppins', sans-serif;
+      font-size: 38px;
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -1px;
+    }
+    .stat-value.total       { color: var(--ink); }
+    .stat-value.shipped     { color: var(--green); }
+    .stat-value.iterating   { color: var(--orange); }
+    .stat-value.prototype   { color: var(--accent); }
+    .stat-bar {
+      height: 3px;
+      border-radius: 2px;
+      margin-top: 10px;
+    }
+    .stat-bar.total       { background: var(--border); }
+    .stat-bar.shipped     { background: var(--green-bg); }
+    .stat-bar.iterating   { background: var(--orange-bg); }
+    .stat-bar.prototype   { background: rgba(16,172,235,0.12); }
+
+    /* SECTION TITLE */
+    .section-title {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      margin-bottom: 16px;
+    }
+
+    /* CARD */
+    .card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 14px;
+      overflow: hidden;
+      transition: border-color .18s, transform .18s, box-shadow .18s;
+    }
+    .card:hover {
+      border-color: rgba(255,255,255,0.14);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      padding: 18px 22px 16px;
+      gap: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .card-title-block { flex: 1; min-width: 0; }
+    .card-title {
+      font-family: 'Poppins', sans-serif;
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }
+    .card-title a {
+      color: var(--ink);
+      text-decoration: none;
+      transition: color .15s;
+    }
+    .card-title a:hover { color: var(--accent); }
+    .card-date {
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      color: var(--ink-muted);
+      font-weight: 400;
+      margin-top: 2px;
+    }
+
+    .badge {
+      flex-shrink: 0;
+      padding: 5px 13px;
+      border-radius: 0;
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border-left: 3px solid transparent;
+    }
+    .badge.shipped   { background: var(--green-bg);  color: var(--green);  border-left-color: var(--green); }
+    .badge.iterating { background: var(--orange-bg); color: var(--orange); border-left-color: var(--orange); }
+    .badge.prototype { background: rgba(16,172,235,0.08); color: var(--accent); border-left-color: var(--accent); }
+
+    /* card body */
+    .card-body { padding: 0 22px 20px; }
+
+    .card-row {
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .card-row:last-child { border-bottom: none; }
+
+    .row-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      margin-bottom: 5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .row-label-icon {
+      width: 16px;
+      height: 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+    }
+    .icon-game    { background: rgba(16,172,235,0.1); color: var(--accent); border-radius: 2px; }
+    .icon-design  { background: rgba(241,87,56,0.1);  color: var(--secondary); border-radius: 2px; }
+    .icon-verdict { background: var(--green-bg);       color: var(--green); border-radius: 2px; }
+    .icon-tech    { background: rgba(255,255,255,0.06);color: var(--ink-muted); border-radius: 2px; }
+
+    .row-text {
+      font-family: 'Poppins', sans-serif;
+      font-size: 13.5px;
+      color: var(--ink-secondary);
+      line-height: 1.65;
+    }
+
+    .card-row.verdict-row .row-text {
+      color: var(--ink);
+      font-size: 13.5px;
+    }
+
+    /* tags + play link */
+    .card-footer {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 22px 16px;
+      border-top: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+    .tag {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      color: var(--ink-muted);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 3px 9px;
+      font-weight: 400;
+    }
+    .play-link {
+      margin-left: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--accent);
+      color: var(--bg-primary);
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 8px 16px;
+      border-radius: 0;
+      border-left: 3px solid var(--secondary);
+      text-decoration: none;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      transition: background .15s;
+    }
+    .play-link:hover { background: var(--accent-dark); }
+    .play-link svg { width: 11px; height: 11px; fill: currentColor; }
+
+    /* FOOTER */
+    footer {
+      background: var(--bg-primary);
+      border-top: 1px solid var(--border);
+      padding: 28px;
+      text-align: center;
+    }
+    footer p {
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      color: var(--ink-muted);
+      letter-spacing: 0.02em;
+    }
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    footer a:hover { text-decoration: underline; }
+
+    /* RESPONSIVE */
+    @media (max-width: 600px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .hero h1 { font-size: 32px; }
+      .wrap, .hero { padding-left: 16px; padding-right: 16px; }
+      .nav { padding: 0 16px; }
+      .play-link { margin-left: 0; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="nav-logo" href="#">
+    <span class="nav-logo-badge">AM</span>
+    <span class="nav-logo-text">Minds Games</span>
+  </a>
+  <div class="nav-right">
+    <a href="https://animocaminds.ai" target="_blank">Animoca Minds</a>
+    <a href="https://github.com/GameDesignerMohamed/animoca-minds-games" target="_blank">GitHub</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">Game Lab</div>
+    <h1>Ship games. <em>Learn fast.</em></h1>
+    <p class="hero-sub">Games built with Animoca Minds AI agents. Each build is shipped, reviewed, and iterated.</p>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-label">Total Builds</div>
+      <div class="stat-value total" id="stat-total">0</div>
+      <div class="stat-bar total"></div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Shipped</div>
+      <div class="stat-value shipped" id="stat-shipped">0</div>
+      <div class="stat-bar shipped"></div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Iterating</div>
+      <div class="stat-value iterating" id="stat-iterating">0</div>
+      <div class="stat-bar iterating"></div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Prototype</div>
+      <div class="stat-value prototype" id="stat-prototype">0</div>
+      <div class="stat-bar prototype"></div>
+    </div>
+  </div>
+
+  <div class="section-title">Build Feed</div>
+
+  <div id="feed">
+
+    <!-- Cipher -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title-block">
+          <div class="card-title"><a href="games/cipher/index.html" target="_blank">Cipher</a></div>
+          <div class="card-date">March 30, 2026</div>
+        </div>
+        <div class="badge iterating">Iterating</div>
+      </div>
+      <div class="card-body">
+        <div class="card-row">
+          <div class="row-label"><span class="row-label-icon icon-game">G</span> Game</div>
+          <div class="row-text">3D conveyor-belt deduction puzzle. Packages roll toward you on a belt &mdash; some are contraband, flagged by a hidden rule you must infer. Scan to reveal, Ship to earn credits, or Pass to skip. Guess wrong and the system takes damage. Figure out the pattern before HP hits zero.</div>
+        </div>
+        <div class="card-row">
+          <div class="row-label"><span class="row-label-icon icon-design">D</span> Design</div>
+          <div class="row-text">The core loop &mdash; observe, hypothesize, test, decide &mdash; is genuinely compelling. Each scan costs a limited resource, forcing you to balance information-gathering against risk-taking. The deduction log lets you track evidence across packages. Timer pressure escalates per level. Needs better visual feedback on ship/pass outcomes and clearer rule complexity progression.</div>
+        </div>
+        <div class="card-row verdict-row">
+          <div class="row-label"><span class="row-label-icon icon-verdict">V</span> Verdict</div>
+          <div class="row-text">Strong deduction mechanic that rewards pattern recognition under pressure. The hidden-rule design has real depth &mdash; simple color rules in early levels, compound rules (shape AND size) later. Went through 10 iterations to stabilize the build. Key remaining work: exit animations, progressive difficulty curve, and mobile touch input. The inference engine is the real game &mdash; everything else is scaffolding around it.</div>
+        </div>
+        <div class="card-row">
+          <div class="row-label"><span class="row-label-icon icon-tech">T</span> Tech</div>
+          <div class="row-text">Three.js with WebGL renderer. Single HTML file, no build step. MeshStandardMaterial with emissive properties for visual feedback. Web Audio API for procedural sound. Deployed as static file on GitHub Pages.</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <span class="tag">three.js</span>
+        <span class="tag">3d</span>
+        <span class="tag">deduction</span>
+        <span class="tag">puzzle</span>
+        <a class="play-link" href="games/cipher/index.html" target="_blank">
+          <svg viewBox="0 0 12 12"><path d="M2 1l9 5-9 5V1z"/></svg>
+          Play
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  <p>Animoca Minds Games &mdash; Built with AI agents &mdash; <a href="https://github.com/GameDesignerMohamed/animoca-minds-games" target="_blank">View on GitHub</a></p>
+</footer>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    let shipped = 0, iterating = 0, prototype = 0;
+    document.querySelectorAll('.badge').forEach(b => {
+      if (b.classList.contains('shipped'))   shipped++;
+      if (b.classList.contains('iterating')) iterating++;
+      if (b.classList.contains('prototype')) prototype++;
+    });
+    document.getElementById('stat-total').textContent     = shipped + iterating + prototype;
+    document.getElementById('stat-shipped').textContent   = shipped;
+    document.getElementById('stat-iterating').textContent = iterating;
+    document.getElementById('stat-prototype').textContent = prototype;
+  });
+</script>
+
+</body>
+</html>
