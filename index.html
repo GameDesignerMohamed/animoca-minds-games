@@ -93,19 +93,8 @@
 
     /* HERO */
     .hero {
-      background: var(--bg-primary);
+      background: var(--bg-secondary);
       padding: 56px 28px 80px;
-      position: relative;
-      overflow: hidden;
-    }
-    .hero::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background:
-        radial-gradient(ellipse at 28% 42%, rgba(16,172,235,0.06) 0%, transparent 60%),
-        radial-gradient(ellipse at 72% 58%, rgba(241,87,56,0.04) 0%, transparent 60%);
-      pointer-events: none;
     }
     .hero-inner {
       max-width: 960px;
@@ -395,34 +384,11 @@
   <div class="hero-inner">
     <div class="hero-eyebrow">Game Lab</div>
     <h1>Ship games. <em>Learn fast.</em></h1>
-    <p class="hero-sub">Games built with Animoca Minds AI agents. Each build is shipped, reviewed, and iterated.</p>
+    <p class="hero-sub">Games built with Animoca Minds AI agents.</p>
   </div>
 </div>
 
 <div class="wrap">
-
-  <div class="stats">
-    <div class="stat">
-      <div class="stat-label">Total Builds</div>
-      <div class="stat-value total" id="stat-total">0</div>
-      <div class="stat-bar total"></div>
-    </div>
-    <div class="stat">
-      <div class="stat-label">Shipped</div>
-      <div class="stat-value shipped" id="stat-shipped">0</div>
-      <div class="stat-bar shipped"></div>
-    </div>
-    <div class="stat">
-      <div class="stat-label">Iterating</div>
-      <div class="stat-value iterating" id="stat-iterating">0</div>
-      <div class="stat-bar iterating"></div>
-    </div>
-    <div class="stat">
-      <div class="stat-label">Prototype</div>
-      <div class="stat-value prototype" id="stat-prototype">0</div>
-      <div class="stat-bar prototype"></div>
-    </div>
-  </div>
 
   <div class="section-title">Build Feed</div>
 
@@ -446,14 +412,6 @@
           <div class="row-label"><span class="row-label-icon icon-design">D</span> Design</div>
           <div class="row-text">The core loop &mdash; observe, hypothesize, test, decide &mdash; is genuinely compelling. Each scan costs a limited resource, forcing you to balance information-gathering against risk-taking. The deduction log lets you track evidence across packages. Timer pressure escalates per level. Needs better visual feedback on ship/pass outcomes and clearer rule complexity progression.</div>
         </div>
-        <div class="card-row verdict-row">
-          <div class="row-label"><span class="row-label-icon icon-verdict">V</span> Verdict</div>
-          <div class="row-text">Strong deduction mechanic that rewards pattern recognition under pressure. The hidden-rule design has real depth &mdash; simple color rules in early levels, compound rules (shape AND size) later. Went through 10 iterations to stabilize the build. Key remaining work: exit animations, progressive difficulty curve, and mobile touch input. The inference engine is the real game &mdash; everything else is scaffolding around it.</div>
-        </div>
-        <div class="card-row">
-          <div class="row-label"><span class="row-label-icon icon-tech">T</span> Tech</div>
-          <div class="row-text">Three.js with WebGL renderer. Single HTML file, no build step. MeshStandardMaterial with emissive properties for visual feedback. Web Audio API for procedural sound. Deployed as static file on GitHub Pages.</div>
-        </div>
       </div>
       <div class="card-footer">
         <span class="tag">three.js</span>
@@ -474,20 +432,6 @@
   <p>Animoca Minds Games &mdash; Built with AI agents &mdash; <a href="https://github.com/GameDesignerMohamed/animoca-minds-games" target="_blank">View on GitHub</a></p>
 </footer>
 
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    let shipped = 0, iterating = 0, prototype = 0;
-    document.querySelectorAll('.badge').forEach(b => {
-      if (b.classList.contains('shipped'))   shipped++;
-      if (b.classList.contains('iterating')) iterating++;
-      if (b.classList.contains('prototype')) prototype++;
-    });
-    document.getElementById('stat-total').textContent     = shipped + iterating + prototype;
-    document.getElementById('stat-shipped').textContent   = shipped;
-    document.getElementById('stat-iterating').textContent = iterating;
-    document.getElementById('stat-prototype').textContent = prototype;
-  });
-</script>
 
 </body>
 </html>
