@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Three.js Gamedev Tutorial | Animoca Minds</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2310ACEB'/%3E%3Ctext x='16' y='22' font-family='monospace' font-size='16' font-weight='900' fill='%23131112' text-anchor='middle'%3EAM%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --accent:       #10ACEB;
+      --accent-dark:  #0D8FC4;
+      --secondary:    #F15738;
+      --bg-primary:   #131112;
+      --bg-secondary: #1D1A1B;
+      --ink:          #F5F5F3;
+      --ink-secondary:#C5C5C3;
+      --ink-muted:    #A69080;
+      --border:       rgba(255,255,255,0.08);
+      --radius:       4px;
+      --green:        #00ffaa;
+      --orange:       #ffcc00;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg-primary);
+      color: var(--ink);
+      font-family: 'Poppins', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.6;
+    }
+
+    .nav {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--bg-primary);
+      border-bottom: 1px solid var(--border);
+      height: 56px;
+      display: flex; align-items: center;
+      padding: 0 28px;
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none;
+    }
+    .nav-logo-badge {
+      background: var(--accent);
+      color: var(--bg-primary);
+      font-family: 'Space Mono', monospace;
+      font-weight: 700;
+      font-size: 12px;
+      padding: 4px 10px;
+      border-left: 3px solid var(--secondary);
+    }
+    .nav-logo-text {
+      color: var(--ink);
+      font-family: 'Space Mono', monospace;
+      font-weight: 700;
+      font-size: 14px;
+      text-transform: uppercase;
+    }
+
+    .hero {
+      background: var(--bg-secondary);
+      padding: 64px 28px;
+      text-align: center;
+    }
+    .hero-eyebrow {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+    .hero h1 {
+      font-family: 'Space Mono', monospace;
+      font-size: clamp(32px, 5vw, 48px);
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+    .hero-sub {
+      color: var(--ink-secondary);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .wrap {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 28px;
+    }
+
+    .section { margin-bottom: 60px; }
+    .section-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .section-label::after {
+      content: ';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    h2 {
+      font-size: 24px;
+      font-weight: 800;
+      margin-bottom: 20px;
+      letter-spacing: -0.02em;
+    }
+
+    .card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      background: rgba(16,172,235,0.1);
+      color: var(--accent);
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      border-left: 2px solid var(--accent);
+    }
+
+    code {
+      font-family: 'Space Mono', monospace;
+      background: rgba(255,255,255,0.05);
+      padding: 2px 6px;
+      border-radius: 2px;
+      font-size: 0.9em;
+      color: var(--green);
+    }
+
+    pre {
+      background: var(--bg-primary);
+      padding: 20px;
+      border-radius: var(--radius);
+      overflow-x: auto;
+      margin: 20px 0;
+      border: 1px solid var(--border);
+    }
+    pre code {
+      background: none;
+      padding: 0;
+      color: var(--ink-secondary);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .prompt-box {
+      background: #f0f7ff;
+      border-radius: 8px;
+      padding: 24px;
+      color: #131112;
+      margin: 20px 0;
+      border-left: 8px solid var(--accent);
+    }
+    .prompt-box h3 {
+      font-family: 'Space Mono', monospace;
+      font-weight: 700;
+      font-size: 14px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      color: var(--bg-primary);
+    }
+    .prompt-box blockquote {
+      font-style: italic;
+      background: rgba(0,0,0,0.05);
+      padding: 12px;
+      border-radius: 4px;
+      margin-bottom: 16px;
+      font-size: 0.95em;
+    }
+    .prompt-box ul {
+      list-style: none;
+    }
+    .prompt-box li {
+      margin-bottom: 8px;
+      padding-left: 20px;
+      position: relative;
+      font-size: 0.9em;
+    }
+    .prompt-box li::before {
+      content: '→';
+      position: absolute;
+      left: 0;
+      color: var(--accent-dark);
+      font-weight: 900;
+    }
+
+    .comparison {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 20px 0;
+    }
+    .comparison-item {
+      padding: 16px;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+    .comparison-bad { background: rgba(241, 87, 56, 0.1); border: 1px solid rgba(241, 87, 56, 0.2); }
+    .comparison-good { background: rgba(0, 255, 170, 0.1); border: 1px solid rgba(0, 255, 170, 0.2); }
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 40px 28px;
+      text-align: center;
+      color: var(--ink-muted);
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+    }
+
+    @media (max-width: 600px) {
+      .wrap { padding: 24px 16px; }
+      .hero { padding: 48px 16px; }
+      .comparison { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="nav-logo" href="index.html" style="text-decoration:none">
+    <span class="nav-logo-badge">AM</span>
+    <span class="nav-logo-text">Gamedev Tutorial</span>
+  </a>
+</nav>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">Mind Academy</div>
+    <h1>Game Dev for <em>Minds</em></h1>
+    <p class="hero-sub">A comprehensive guide for biological stewards and their cognitive digital beings on how to scaffold, build, and ship 3D browser games.</p>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <section class="section">
+    <div class="section-label">01. The Stack</div>
+    <h2>Modern 3D Architecture</h2>
+    <div class="card">
+      <div class="badge">THREE.JS + WEBGPU</div>
+      <p>Minds should always prioritize <strong>Three.js</strong> as the core engine. It's stable, has deep documentation, and supports <strong>WebGPU</strong> (the future of web graphics) with a reliable <strong>WebGL fallback</strong>.</p>
+      <ul style="margin: 20px 0 0 20px; color: var(--ink-secondary);">
+        <li><strong>WebGPURenderer:</strong> For high-performance compute shaders and particle systems.</li>
+        <li><strong>WebGL Fallback:</strong> Ensures 100% device compatibility.</li>
+        <li><strong>Single File:</strong> Deliver everything in one HTML file to minimize friction for your steward.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-label">02. Prompting the Heartbeat</div>
+    <h2>The Creator-Mind Handshake</h2>
+    <p>Instead of worrying about technical code like <code>requestAnimationFrame</code>, a creator should focus on the <strong>Instructions</strong> that tell a Mind how to structure the game's execution cycle.</p>
+    
+    <div class="prompt-box">
+      <h3>The "Pro" Core Loop Prompt</h3>
+      <blockquote>"Implement a frame-rate independent core loop. Separate the logic into an <code>update(dt)</code> function for physics/AI and a <code>render()</code> function for the scene. Ensure the loop handles window resizing automatically."</blockquote>
+      <ul>
+        <li><strong>Delta Time (dt):</strong> Movement stays smooth whether the player is on a 60Hz or 144Hz monitor.</li>
+        <li><strong>Separation:</strong> Prevents "spaghetti code" by keeping the rendering and game rules in separate buckets.</li>
+        <li><strong>Auto-Resize:</strong> Ensures the game always looks perfect when the browser window changes size.</li>
+      </ul>
+    </div>
+
+    <div class="comparison">
+      <div class="comparison-item comparison-bad">
+        <strong>Weak Prompt:</strong><br>
+        "Make a game loop for a snake game."<br>
+        <em>Result: Jittery movement, broken graphics on resize, and code that's hard to debug.</em>
+      </div>
+      <div class="comparison-item comparison-good">
+        <strong>Strong Prompt:</strong><br>
+        "Set up a Three.js loop with separate update(dt) and render stages."<br>
+        <em>Result: High-performance, professional engine structure used by top studios.</em>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-label">03. Project Structure</div>
+    <h2>The 5-Step Scaffold</h2>
+    <p>When starting a new game, follow this exact sequence to ensure a playable V1 is ready in under 45 minutes:</p>
+    <div class="card">
+      <p><strong>1. HTML Shell:</strong> Setup basic canvas, UI overlay, and styles.<br>
+      <strong>2. Scene Setup:</strong> Initialize camera, lighting, and <code>WebGPURenderer</code>.<br>
+      <strong>3. Asset Management:</strong> Create geometries and PBR materials.<br>
+      <strong>4. Logic Implementation:</strong> Code the primary mechanic (e.g., movement).<br>
+      <strong>5. UI & Polish:</strong> Add HUD, game-over screens, and neon glow effects.</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-label">04. Prompt Templates</div>
+    <h2>Training Your Mind</h2>
+    <p>Use these prompts to help your Mind understand the desired output style and performance constraints.</p>
+    
+    <div class="prompt-box">
+      <h3>Template: Scaffolding a 3D Game</h3>
+      <ul>
+        <li>Act as a Three.js expert developer. Build a [GAME_TYPE] game.</li>
+        <li>Use WebGPURenderer with WebGL fallback.</li>
+        <li>Deliver a single self-contained HTML file.</li>
+        <li>Include mobile touch support and keyboard controls.</li>
+        <li>Focus on neon aesthetics and high-performance InstancedMesh.</li>
+      </ul>
+    </div>
+
+    <div class="prompt-box">
+      <h3>Template: Implementing AI Behaviors</h3>
+      <ul>
+        <li>Create an AI snake/actor using steering behaviors (Chase, Wander, Avoid).</li>
+        <li>Ensure AI actors have a simple state machine (Idle, Aggressive, Flee).</li>
+        <li>Use compute shaders for large groups of actors if performance drops.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-label">05. Boilerplate</div>
+    <h2>The Professional Foundation</h2>
+    <p>This is what a Mind generates when you use the "Pro" prompt. It's clean, modular, and ready for expansion.</p>
+    <pre><code>// Example of a Structured Loop
+const clock = new THREE.Clock();
+
+function animate() {
+    requestAnimationFrame(animate);
+    const dt = clock.getDelta();
+
+    update(dt); // Physics & Logic
+    render();   // Drawing
+}
+
+function update(dt) {
+    // Mind implements gameplay here
+    cube.rotation.y += 1.0 * dt; 
+}
+
+function render() {
+    renderer.render(scene, camera);
+}</code></pre>
+  </section>
+
+</div>
+
+<footer>
+  Animoca Minds &mdash; Ship Games. Learn Fast. &mdash; 2026
+</footer>
+
+</body>
+</html>
