@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Animoca Minds — Game Creator Hub</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- Genre Selection Page -->
+<div id="genre-select">
+  <div class="genre-content">
+    <div class="genre-tagline">Always-on AI Mind</div>
+    <h1>ANIMOCA MINDS</h1>
+    <h2>Initialize a game-building Mind. Choose a genre<br>to shape your 3D creation.</h2>
+    <p>Select a genre</p>
+    <div class="genre-grid" id="genre-grid"></div>
+  </div>
+</div>
+
+<!-- Loading overlay -->
+<div id="loading-overlay" style="display:none;">
+  <div id="loading-bar-bg"><div id="loading-bar-fill"></div></div>
+  <div id="loading-text">Loading assets...</div>
+</div>
+
+<!-- UI overlay (positioned dynamically over the Phaser canvas) -->
+<div id="game-ui" style="display:none;">
+  <!-- Station Checklist HUD -->
+  <div id="hud-checklist">
+    <h3>STATIONS</h3>
+    <div class="station-row pending" data-station="design">
+      <span class="station-check"></span> Design Desk
+    </div>
+    <div class="station-row pending" data-station="art">
+      <span class="station-check"></span> Art Studio
+    </div>
+    <div class="station-row pending" data-station="sound">
+      <span class="station-check"></span> Sound Booth
+    </div>
+    <div class="station-row pending" data-station="code">
+      <span class="station-check"></span> Code Lab
+    </div>
+  </div>
+
+  <!-- Chat Panel -->
+  <div id="chat-panel">
+    <div id="chat-header">
+      <h3 id="chat-npc-name"></h3>
+      <button id="chat-close"></button>
+    </div>
+    <div id="chat-messages"></div>
+    <div id="chat-choices"></div>
+    <button id="collect-btn">Collect Asset</button>
+  </div>
+
+  <!-- Build Button (end-game) -->
+  <button id="build-btn">BUILD MY GAME</button>
+
+  <!-- Build Prompt Modal -->
+  <div id="build-modal">
+    <div class="build-modal-content">
+      <h2>Your Minds Prompt</h2>
+      <p>Copy this prompt and send it to your Animoca Mind to generate the game.</p>
+      <pre id="build-prompt-text"></pre>
+      <div class="build-modal-actions">
+        <button id="build-copy-btn">Copy Prompt</button>
+        <button id="build-close-btn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Welcome -->
+  <div id="welcome-overlay">
+    Animoca Minds — Game Creator<br><br>
+    WASD to move, <b>E</b> to interact<br>
+    <small>Visit all 4 stations to shape your game</small>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+
+<script type="module">
+// ============================================================
+// GENRE CONFIG — genre-dependent booth options (all 3D/Three.js)
+// ============================================================
+const GENRES = {
+  'Space Shooter': {
+    emoji: '🚀',
+    description: '3D space combat with enemy waves and power-ups',
+    design: {
+      greeting: "Welcome to the Design Desk! Let's plan your space shooter!",
+      choices: ["Enemy wave survival", "Open-world exploration", "Boss rush campaign"],
+      responses: [
+        "Wave survival! I'll design escalating enemy formations, combo multipliers, and a leaderboard system.",
+        "Open-world space! I'll map out sectors to explore, factions to encounter, and a quest line through the cosmos.",
+        "Boss rush! I'll design unique multi-phase bosses, each with distinct attack patterns and weak points."
+      ],
+    },
+    art: {
+      greeting: "Let's give your space shooter a 3D visual identity!",
+      choices: ["Low-poly sci-fi", "Neon wireframe", "Realistic deep space"],
+      responses: [
+        "Low-poly sci-fi! Clean geometric ships, colorful asteroids, and stylized explosions. Very Star Fox.",
+        "Neon wireframe! Glowing grid lines, Tron-style ships, and synthwave particle trails. Pure retro-future.",
+        "Realistic deep space! Detailed ship hulls, volumetric nebulas, and cinematic lighting. Stunning."
+      ],
+    },
+    sound: {
+      greeting: "Every space battle needs the right soundtrack!",
+      choices: ["Synthwave pulse", "Cinematic orchestral", "Retro arcade bleeps"],
+      responses: [
+        "Synthwave! Pulsing bass, arpeggiated synths, and that perfect 80s-future vibe for your dogfights.",
+        "Orchestral! Sweeping strings for exploration, brass hits for combat, and a triumphant victory theme.",
+        "Retro arcade! Crunchy 8-bit lasers, chiptune melodies, and satisfying explosion sound effects."
+      ],
+    },
+    code: {
+      greeting: "Let's define how your space shooter feels to play!",
+      choices: ["Bullet-hell intensity", "Strategic dogfighting", "Arcade simplicity"],
+      responses: [
+        "Bullet-hell! Hundreds of projectiles, precise hitboxes, and frame-perfect dodging. Intense!",
+        "Strategic dogfighting! Ship loadouts, shield management, and tactical positioning in 3D space.",
+        "Arcade simplicity! One-thumb controls, generous hitboxes, and that pure pick-up-and-play flow."
+      ],
+    },
+  },
+  'Platformer': {
+    emoji: '🏃',
+    description: '3D platformer with jumping, collecting, and exploring',
+    design: {
+      greeting: "Welcome to the Design Desk! Let's plan your platformer!",
+      choices: ["Collectathon adventure", "Precision obstacle course", "Puzzle-platformer hybrid"],
+      responses: [
+        "Collectathon! I'll design open levels with hidden items, unlockable areas, and a hub world connecting everything.",
+        "Precision course! I'll map tight obstacle sequences, checkpoints, and a difficulty curve that teaches through play.",
+        "Puzzle-platformer! I'll blend environmental puzzles with movement challenges — think Portal meets Mario."
+      ],
+    },
+    art: {
+      greeting: "Let's give your platformer a 3D look!",
+      choices: ["Stylized cartoon 3D", "Dark atmospheric", "Bright candy world"],
+      responses: [
+        "Stylized cartoon! Bold outlines, exaggerated proportions, and vibrant colors. Think A Hat in Time.",
+        "Dark atmospheric! Moody lighting, fog, crumbling structures — a platformer with weight and tension.",
+        "Candy world! Glossy surfaces, pastel colors, and bouncy everything. Pure joy in 3D."
+      ],
+    },
+    sound: {
+      greeting: "What should your platformer sound like?",
+      choices: ["Whimsical adventure", "Epic orchestral", "Ambient nature sounds"],
+      responses: [
+        "Whimsical! Playful melodies, bouncy percussion, and charming sound effects for every jump and collect.",
+        "Epic orchestral! Grand themes for each world, dynamic music that shifts with action, and heroic fanfares.",
+        "Ambient nature! Wind through trees, distant waterfalls, and subtle musical cues. Peaceful exploration."
+      ],
+    },
+    code: {
+      greeting: "How should your platformer feel to control?",
+      choices: ["Tight precision controls", "Exploration-focused movement", "Speedrun-optimized mechanics"],
+      responses: [
+        "Precision! Pixel-perfect landing, coyote time, and responsive air control. Every jump feels earned.",
+        "Exploration! Generous movement, double jumps, wall slides — freedom to roam and discover at your pace.",
+        "Speedrun-optimized! Momentum conservation, slide-jumps, and advanced tech for skilled players to master."
+      ],
+    },
+  },
+  'Racing': {
+    emoji: '🏎️',
+    description: '3D racing with tracks, speed, and competition',
+    design: {
+      greeting: "Welcome to the Design Desk! Let's plan your racing game!",
+      choices: ["Circuit championship", "Open-road rally", "Combat racing"],
+      responses: [
+        "Circuit championship! I'll design varied tracks, a progression system, and unlockable vehicles with stats.",
+        "Open-road rally! I'll map winding routes through diverse terrain, dynamic weather, and checkpoint racing.",
+        "Combat racing! I'll design weapon pickups, track hazards, and destructible environments. Mario Kart meets Burnout."
+      ],
+    },
+    art: {
+      greeting: "What visual style for your 3D racer?",
+      choices: ["Futuristic neon", "Off-road realistic", "Retro low-poly"],
+      responses: [
+        "Futuristic neon! Hovercrafts, glowing tracks, and speed lines. F-Zero vibes in full 3D.",
+        "Off-road realistic! Mud splatter, dust clouds, detailed terrain, and dynamic lighting through forests.",
+        "Retro low-poly! Chunky geometry, saturated colors, and that nostalgic PS1-era racing charm."
+      ],
+    },
+    sound: {
+      greeting: "What should your racing game sound like?",
+      choices: ["High-energy EDM", "Engine roar realism", "Chill cruise beats"],
+      responses: [
+        "EDM! Pumping bass drops on boosts, building synths on straights, and euphoric drops when you take first place.",
+        "Engine realism! Detailed RPM-mapped sounds, tire screech physics, and a roaring crowd at the finish line.",
+        "Chill cruise! Laid-back lo-fi beats, smooth jazz on night tracks, and a relaxing vibe even at 200mph."
+      ],
+    },
+    code: {
+      greeting: "How should your racer feel to drive?",
+      choices: ["Drift-heavy arcade", "Simulation physics", "Kart-style power-ups"],
+      responses: [
+        "Drift arcade! Easy to initiate drifts, boost on exit, and that satisfying slide around every corner.",
+        "Simulation! Realistic tire grip, weight transfer, braking zones — rewarding to master, punishing to ignore.",
+        "Kart-style! Item boxes, rubber-banding, and chaotic fun. Easy to pick up, impossible to put down."
+      ],
+    },
+  },
+  'Tower Defense': {
+    emoji: '🏰',
+    description: '3D tower defense with strategy and waves of enemies',
+    design: {
+      greeting: "Welcome to the Design Desk! Let's plan your tower defense!",
+      choices: ["Classic lane defense", "Open-field placement", "Hero + towers hybrid"],
+      responses: [
+        "Classic lanes! I'll design winding paths, chokepoints, and a tech tree for tower upgrades across levels.",
+        "Open-field! I'll create maps where you build your own maze, funneling enemies through your perfect kill zone.",
+        "Hero hybrid! I'll design a controllable hero that fights alongside your towers — direct action meets strategy."
+      ],
+    },
+    art: {
+      greeting: "What 3D style for your tower defense?",
+      choices: ["Medieval fantasy", "Sci-fi military", "Cute chibi"],
+      responses: [
+        "Medieval fantasy! Stone towers, magical effects, armored knights, and dragon bosses. Classic and epic.",
+        "Sci-fi military! Laser turrets, force fields, alien invaders, and sleek futuristic base structures.",
+        "Cute chibi! Adorable defenders, goofy enemies, and colorful explosions. Strategy wrapped in charm."
+      ],
+    },
+    sound: {
+      greeting: "What audio vibe for your tower defense?",
+      choices: ["Fantasy orchestral", "Tense electronic", "Playful cartoon"],
+      responses: [
+        "Fantasy orchestral! Horns for waves, strings for building, and a thunderous boss theme. Epic.",
+        "Tense electronic! Building synth layers as waves grow, alarm-style cues, and satisfying turret sounds.",
+        "Playful cartoon! Bouncy sound effects, goofy enemy noises, and catchy tunes that keep you building."
+      ],
+    },
+    code: {
+      greeting: "How should your tower defense play?",
+      choices: ["Complex strategy layers", "Fast-paced action waves", "Resource management focus"],
+      responses: [
+        "Complex strategy! Multiple damage types, enemy resistances, synergy combos between towers, and tough decisions.",
+        "Fast-paced! Quick waves, rapid placement, and intense moments where your build is truly tested.",
+        "Resource management! Careful economy, risk/reward upgrades, and the tension of spending wisely."
+      ],
+    },
+  },
+  'Puzzle': {
+    emoji: '🧩',
+    description: '3D puzzle game with brain-teasing mechanics',
+    design: {
+      greeting: "Welcome to the Design Desk! Let's plan your puzzle game!",
+      choices: ["Physics-based sandbox", "Pattern matching levels", "Escape room style"],
+      responses: [
+        "Physics sandbox! I'll design levels where you manipulate objects, gravity, and momentum to reach the goal.",
+        "Pattern matching! I'll create increasingly complex patterns with color, shape, and sequence puzzles.",
+        "Escape room! I'll design interconnected rooms with clues, locks, and that satisfying eureka moment."
+      ],
+    },
+    art: {
+      greeting: "What 3D visual style for your puzzler?",
+      choices: ["Minimalist geometric", "Mystical glowing", "Isometric diorama"],
+      responses: [
+        "Minimalist geometric! Clean shapes, subtle shadows, and a serene color palette. Think Monument Valley in 3D.",
+        "Mystical glowing! Floating runes, ethereal light, and magical particles. Every puzzle feels enchanted.",
+        "Isometric diorama! Tiny detailed worlds you rotate and examine, like opening a intricate music box."
+      ],
+    },
+    sound: {
+      greeting: "What should your puzzle game sound like?",
+      choices: ["Zen ambient", "Mystery tension", "Satisfying clicks & chimes"],
+      responses: [
+        "Zen ambient! Soft pads, nature textures, and breathing room. The audio equivalent of a deep exhale.",
+        "Mystery tension! Subtle dissonance, ticking clocks, and a swell of relief when you solve each puzzle.",
+        "Clicks & chimes! Every interaction makes a satisfying sound. Tactile, musical, and deeply rewarding."
+      ],
+    },
+    code: {
+      greeting: "How should your puzzle game feel?",
+      choices: ["Physics-driven interactions", "Turn-based logic", "Real-time pressure"],
+      responses: [
+        "Physics-driven! Objects roll, bounce, and chain-react. Every solution feels like a Rube Goldberg machine.",
+        "Turn-based logic! Think carefully, plan your moves, and execute. Chess-like satisfaction in every level.",
+        "Real-time pressure! A ticking clock adds urgency — solve fast or lose progress. Thrilling puzzle action."
+      ],
+    },
+  },
+  'RPG': {
+    emoji: '⚔️',
+    description: '3D role-playing game with quests, loot, and leveling',
+    design: {
+      greeting: "Welcome to the Design Desk! Let's plan your RPG!",
+      choices: ["Epic quest storyline", "Open-world sandbox", "Dungeon crawler"],
+      responses: [
+        "Epic quest! I'll design a branching narrative with key choices, memorable NPCs, and a climactic final battle.",
+        "Open-world sandbox! I'll map a vast world with towns, dungeons, factions, and emergent gameplay systems.",
+        "Dungeon crawler! I'll design procedurally generated floors, loot tables, trap rooms, and escalating boss encounters."
+      ],
+    },
+    art: {
+      greeting: "What 3D art style for your RPG?",
+      choices: ["Fantasy stylized", "Dark and gritty", "Anime cel-shaded"],
+      responses: [
+        "Fantasy stylized! Vibrant colors, exaggerated proportions, and lush environments. Think World of Warcraft meets Zelda.",
+        "Dark and gritty! Weathered textures, muted tones, blood-stained steel, and oppressive atmospheres. Souls-like vibes.",
+        "Anime cel-shaded! Bold outlines, expressive characters, flashy spell effects, and vibrant anime aesthetics."
+      ],
+    },
+    sound: {
+      greeting: "What should your RPG sound like?",
+      choices: ["Sweeping orchestral", "Folk and tavern music", "Dark ambient"],
+      responses: [
+        "Sweeping orchestral! Grand overworld themes, tense battle music, and emotional story moments scored with strings.",
+        "Folk and tavern! Lutes, flutes, and hearty tavern songs. Grounded and immersive — you can almost smell the mead.",
+        "Dark ambient! Echoing caverns, distant whispers, and ominous drones. Every dungeon feels alive and dangerous."
+      ],
+    },
+    code: {
+      greeting: "How should your RPG play?",
+      choices: ["Turn-based combat", "Action real-time combat", "Tactical grid-based"],
+      responses: [
+        "Turn-based! Strategic party management, skill trees, and that satisfying crunch of big damage numbers.",
+        "Action combat! Dodge-rolls, combo attacks, and skill-based encounters. Fast and visceral.",
+        "Tactical grid! Position your party, exploit terrain, and outmaneuver enemies. Deep strategy every fight."
+      ],
+    },
+  },
+};
+
+// ============================================================
+// GENRE SELECTION — opening page
+// ============================================================
+let selectedGenre = null;
+
+let _bootGame = null; // set later after config is defined
+
+(function initGenreSelect() {
+  const grid = document.getElementById('genre-grid');
+  Object.entries(GENRES).forEach(([name, config]) => {
+    const card = document.createElement('button');
+    card.className = 'genre-card';
+    card.innerHTML = `<span class="genre-emoji">${config.emoji}</span><span class="genre-name">${name}</span><span class="genre-desc">${config.description}</span>`;
+    card.addEventListener('click', () => {
+      selectedGenre = name;
+      document.getElementById('genre-select').style.display = 'none';
+      document.getElementById('loading-overlay').style.display = '';
+      if (_bootGame) _bootGame();
+    });
+    grid.appendChild(card);
+  });
+})();
+
+// ============================================================
+// GAME STATE
+// ============================================================
+const STATIONS = ['design', 'art', 'sound', 'code'];
+
+class GameState {
+  constructor() {
+    this.genre = null;
+    this.choices = {};
+    this.designDoc = null;
+    this.artAssets = [];
+    this.soundCode = null;
+    this.gameCode = null;
+    this.conversations = { design: [], art: [], sound: [], code: [] };
+    this.progress = { design: false, art: false, sound: false, code: false };
+    this.assembled = null;
+    this._listeners = {};
+  }
+  on(event, cb) { if (!this._listeners[event]) this._listeners[event] = []; this._listeners[event].push(cb); }
+  off(event, cb) { if (!this._listeners[event]) return; this._listeners[event] = this._listeners[event].filter(c => c !== cb); }
+  emit(event, data) { if (this._listeners[event]) this._listeners[event].forEach(cb => cb(data)); }
+  setGenre(genre) { this.genre = genre; this.emit('genre', genre); }
+  completeStation(id) { if (STATIONS.includes(id)) { this.progress[id] = true; this.emit('progress', { stationId: id, progress: { ...this.progress } }); } }
+  addAsset(type, asset) { if (type === 'art') this.artAssets.push(asset); else if (type === 'sound') this.soundCode = asset; else if (type === 'code') this.gameCode = asset; else if (type === 'design') this.designDoc = asset; this.emit('asset', { type, asset }); }
+  addMessage(id, msg) { if (this.conversations[id]) this.conversations[id].push(msg); }
+  allStationsComplete() { return Object.values(this.progress).every(v => v); }
+  canBuild() { return this.progress.code && STATIONS.some(s => s !== 'code' && this.progress[s]); }
+  getCompletedCount() { return Object.values(this.progress).filter(v => v).length; }
+}
+const gameState = new GameState();
+
+// ============================================================
+// BUILD PROMPT — Animoca Minds Three.js format
+// ============================================================
+function buildPrompt(state) {
+  const genre = state.genre || 'game';
+  const design = state.choices.design || 'not chosen';
+  const art = state.choices.art || 'not chosen';
+  const sound = state.choices.sound || 'not chosen';
+  const code = state.choices.code || 'not chosen';
+
+  return `Act as a Three.js expert developer. Build a ${genre} game. Use WebGPURenderer with WebGL fallback. Deliver a single self-contained HTML file. Include mobile touch support and keyboard controls. Use InstancedMesh for repeated objects. Match a ${art} aesthetic.
+
+GENRE: ${genre}
+DESIGN DIRECTION: ${design}
+ART STYLE (3D): ${art}
+AUDIO DIRECTION: ${sound}
+GAMEPLAY FEEL: ${code}
+
+Implement a frame-rate independent core loop. Separate the logic into an update(dt) function for physics/AI and a render() function for the scene. Ensure the loop handles window resizing automatically.
+
+Make the game fun, polished, and complete. Include a start screen, score tracking, and game-over state. All assets should be procedurally generated in code — no external files.`;
+}
+
+// ============================================================
+// NPC SCRIPTS — dynamically built from genre config
+// ============================================================
+function getNpcScripts() {
+  const g = GENRES[selectedGenre];
+  if (!g) return {};
+
+  const stationMeta = {
+    design: { name: 'Design Desk', deliverable: "Here's your Game Design Document! Core mechanics and progression all mapped out.", asset: { type: 'design', value: 'Game Design Document' } },
+    art:    { name: 'Art Studio',   deliverable: "Your 3D art direction is locked in! Visual identity defined.", asset: { type: 'art', value: '3D Art Direction' } },
+    sound:  { name: 'Sound Booth',  deliverable: "Your soundtrack direction is set! Audio identity defined.", asset: { type: 'sound', value: 'Sound Direction' } },
+    code:   { name: 'Code Lab',     deliverable: "Gameplay feel is locked! Your game's soul is defined.", asset: { type: 'code', value: 'Gameplay Blueprint' } },
+  };
+
+  const scripts = {};
+  for (const station of STATIONS) {
+    const cfg = g[station];
+    const meta = stationMeta[station];
+    scripts[station] = {
+      name: meta.name,
+      greeting: cfg.greeting,
+      choices: cfg.choices,
+      responses: cfg.responses,
+      deliverable: meta.deliverable,
+      asset: meta.asset,
+    };
+  }
+  return scripts;
+}
+
+let NPC_SCRIPTS = {};
+
+class ChatPanel {
+  constructor() {
+    this.panel = document.getElementById('chat-panel');
+    this.nameEl = document.getElementById('chat-npc-name');
+    this.messagesEl = document.getElementById('chat-messages');
+    this.choicesEl = document.getElementById('chat-choices');
+    this.collectBtn = document.getElementById('collect-btn');
+    this.closeBtn = document.getElementById('chat-close');
+    this.currentNpc = null;
+    this.step = 0;
+
+    this.closeBtn.addEventListener('click', () => this.close());
+    this.collectBtn.addEventListener('click', () => this._collect());
+  }
+
+  isOpen() { return this.panel.classList.contains('open'); }
+
+  open(npcId) {
+    if (this.isOpen()) return;
+    if (gameState.progress[npcId]) return;
+
+    this.currentNpc = npcId;
+    this.step = 0;
+    const script = NPC_SCRIPTS[npcId];
+
+    this.nameEl.textContent = script.name;
+    this.messagesEl.innerHTML = '';
+    this.choicesEl.innerHTML = '';
+    this.collectBtn.style.display = 'none';
+
+    this._addMessage(script.greeting, 'npc');
+    this._showChoices(script.choices);
+
+    this.panel.classList.add('open');
+  }
+
+  close() {
+    this.panel.classList.remove('open');
+    this.currentNpc = null;
+    this.step = 0;
+    window.dispatchEvent(new CustomEvent('chatClosed'));
+  }
+
+  _addMessage(text, type) {
+    const div = document.createElement('div');
+    div.className = `chat-msg ${type}`;
+    div.textContent = text;
+    this.messagesEl.appendChild(div);
+    this.messagesEl.scrollTop = this.messagesEl.scrollHeight;
+  }
+
+  _showChoices(choices) {
+    this.choicesEl.innerHTML = '';
+    choices.forEach((text, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.textContent = text;
+      btn.addEventListener('click', () => this._choiceMade(i, text));
+      this.choicesEl.appendChild(btn);
+    });
+  }
+
+  _choiceMade(index, text) {
+    this.choicesEl.innerHTML = '';
+    this._addMessage(text, 'player');
+    gameState.choices[this.currentNpc] = text;
+
+    const script = NPC_SCRIPTS[this.currentNpc];
+    setTimeout(() => {
+      this._addMessage(script.responses[index], 'npc');
+      setTimeout(() => {
+        this._addMessage(script.deliverable, 'npc');
+        this._addMessage('✨ Asset ready to collect!', 'system');
+        this.collectBtn.style.display = 'block';
+      }, 800);
+    }, 600);
+  }
+
+  _collect() {
+    const script = NPC_SCRIPTS[this.currentNpc];
+    gameState.addAsset(script.asset.type, script.asset.value);
+    gameState.completeStation(this.currentNpc);
+    this.collectBtn.style.display = 'none';
+    this._addMessage(`${script.asset.value} collected!`, 'system');
+    setTimeout(() => this.close(), 800);
+  }
+}
+
+// ============================================================
+// HUD OVERLAY — station checklist + build button
+// ============================================================
+class HudOverlay {
+  constructor() {
+    this.buildBtn = document.getElementById('build-btn');
+    this.buildBtn.addEventListener('click', () => this._build());
+
+    gameState.on('progress', ({ stationId }) => {
+      this._updateChecklist(stationId);
+      if (gameState.allStationsComplete()) {
+        this.buildBtn.style.display = 'block';
+      }
+    });
+  }
+
+  _updateChecklist(stationId) {
+    const row = document.querySelector(`.station-row[data-station="${stationId}"]`);
+    if (!row) return;
+    row.classList.remove('pending');
+    row.classList.add('complete');
+    const check = row.querySelector('.station-check');
+    if (check) check.classList.add('checked');
+  }
+
+  _build() {
+    this.buildBtn.style.display = 'none';
+    const modal = document.getElementById('build-modal');
+    const promptText = document.getElementById('build-prompt-text');
+    promptText.textContent = buildPrompt(gameState);
+    modal.style.display = 'flex';
+    window.dispatchEvent(new CustomEvent('buildGame'));
+  }
+}
+
+// ============================================================
+// STATION NPC — animated idle sprite with quest marker
+// ============================================================
+class StationNPC {
+  constructor(scene, config) {
+    this.scene = scene;
+    this.id = config.station;
+    this.name = NPC_SCRIPTS[config.station]?.name || config.station;
+    this.isComplete = false;
+
+    const px = config.x + 16, py = config.y + 24; // center of 32x48 object
+
+    // Animated character sprite
+    this.sprite = scene.physics.add.sprite(px, py, `${config.skin}-d-idle`);
+    this.sprite.setImmovable(true);
+    this.sprite.body.setSize(24, 24);
+    this.sprite.body.setOffset(12, 24);
+    this.sprite.play(`${config.skin}-idle-down`);
+
+    // Quest marker: floating exclamation above NPC (bobbing)
+    this.questMarker = scene.add.image(px, py - 30, 'quest-marker');
+    this.questMarker.setScale(1.5);
+    scene.tweens.add({
+      targets: this.questMarker, y: py - 36,
+      duration: 600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
+    });
+
+    // "E" prompt — visible when player is near
+    this.ePrompt = scene.add.text(px, py + 12, '[E]', {
+      fontSize: '9px', fontFamily: 'monospace', color: '#ffd700',
+      backgroundColor: '#00000088', padding: { x: 3, y: 1 }
+    }).setOrigin(0.5).setVisible(false);
+
+    // Checkmark on completion
+    this.checkmark = scene.add.text(px + 14, py - 20, '✓', {
+      fontSize: '14px', color: '#00ff00'
+    }).setOrigin(0.5).setVisible(false);
+
+    this._onProgress = this._handleProgress.bind(this);
+    gameState.on('progress', this._onProgress);
+    if (gameState.progress[this.id]) this._markComplete();
+  }
+
+  _handleProgress({ stationId }) { if (stationId === this.id && !this.isComplete) this._markComplete(); }
+
+  _markComplete() {
+    this.isComplete = true;
+    this.checkmark.setVisible(true);
+    this.questMarker.setVisible(false);
+    this.ePrompt.setVisible(false);
+  }
+
+  showPrompt() { if (!this.isComplete) this.ePrompt.setVisible(true); }
+  hidePrompt() { this.ePrompt.setVisible(false); }
+
+  updateDepth() {
+    const y = this.sprite.y;
+    this.sprite.setDepth(10 + y);
+    this.ePrompt.setDepth(10 + y + 1);
+    this.questMarker.setDepth(10 + y + 2);
+    this.checkmark.setDepth(10 + y + 1);
+  }
+
+  destroy() {
+    gameState.off('progress', this._onProgress);
+    this.sprite.destroy();
+    this.questMarker.destroy();
+    this.ePrompt.destroy();
+    this.checkmark.destroy();
+  }
+}
+
+// ============================================================
+// HELPER: read Tiled object properties
+// ============================================================
+function getProp(obj, name) {
+  return obj.properties?.find(p => p.name === name)?.value;
+}
+
+// ============================================================
+// CONSTANTS
+// ============================================================
+const MAP_WIDTH = 30, MAP_HEIGHT = 22, TILE_SIZE = 32;
+const WORLD_W = MAP_WIDTH * TILE_SIZE;  // 960
+const WORLD_H = MAP_HEIGHT * TILE_SIZE; // 704
+const INTERACT_DIST = 80;
+
+// Object asset keys to preload
+const OBJECT_KEYS = [
+  'house1','house2','house3','house4',
+  'tent1','tent2','tent3','tent4',
+  'tree-large','tree-small',
+  'bush1','bush2','bush3','bush4','bush5','bush6',
+  'lamp1','lamp2','lamp3',
+  'box1','box2','box3','box4',
+  'log1','log2',
+  'camp1',
+  'vbox1','vbox2','vbox3',
+  'stone1','stone2','stone3',
+  'flower1','flower2','flower3','flower4','flower5','flower6'
+];
+
+const CHAR_SKINS = ['char1', 'char2', 'char3', 'char4'];
+
+// ============================================================
+// LOAD SCENE — preload all assets with progress bar
+// ============================================================
+class LoadScene extends Phaser.Scene {
+  constructor() { super({ key: 'LoadScene' }); }
+
+  preload() {
+    const barFill = document.getElementById('loading-bar-fill');
+    const barText = document.getElementById('loading-text');
+
+    this.load.on('progress', (value) => {
+      barFill.style.width = (value * 100) + '%';
+      barText.textContent = `Loading... ${Math.floor(value * 100)}%`;
+    });
+
+    this.load.on('complete', () => {
+      document.getElementById('loading-overlay').style.display = 'none';
+      document.getElementById('game-ui').style.display = 'block';
+    });
+
+    // Terrain tilesets (loaded as images for tilemap)
+    this.load.image('village-terrain', 'src/assets/craftpix/terrain/village-fields.png');
+    this.load.image('village-fences', 'src/assets/craftpix/terrain/village-fences.png');
+
+    // Object sprites
+    OBJECT_KEYS.forEach(key => this.load.image(key, `src/assets/craftpix/objects/${key}.png`));
+
+    // Character spritesheets: 4 skins x 6 sheets
+    for (const skin of CHAR_SKINS) {
+      // Idle: 4 frames of 48x48 = 192x48
+      this.load.spritesheet(`${skin}-d-idle`, `src/assets/craftpix/characters/${skin}/D_Idle.png`, { frameWidth: 48, frameHeight: 48 });
+      this.load.spritesheet(`${skin}-s-idle`, `src/assets/craftpix/characters/${skin}/S_Idle.png`, { frameWidth: 48, frameHeight: 48 });
+      this.load.spritesheet(`${skin}-u-idle`, `src/assets/craftpix/characters/${skin}/U_Idle.png`, { frameWidth: 48, frameHeight: 48 });
+      // Walk: 6 frames of 48x48 = 288x48
+      this.load.spritesheet(`${skin}-d-walk`, `src/assets/craftpix/characters/${skin}/D_Walk.png`, { frameWidth: 48, frameHeight: 48 });
+      this.load.spritesheet(`${skin}-s-walk`, `src/assets/craftpix/characters/${skin}/S_Walk.png`, { frameWidth: 48, frameHeight: 48 });
+      this.load.spritesheet(`${skin}-u-walk`, `src/assets/craftpix/characters/${skin}/U_Walk.png`, { frameWidth: 48, frameHeight: 48 });
+    }
+
+    // Tilemap
+    this.load.tilemapTiledJSON('hub', 'src/assets/maps/hub.json');
+
+    // UI
+    this.load.image('quest-marker', 'src/assets/ui/minimap_icon_exclamation_yellow.png');
+
+    this.load.on('loaderror', (file) => {
+      console.error(`Failed to load: ${file.key} (${file.url})`);
+    });
+  }
+
+  create() {
+    // Create character animations for all skins
+    for (const skin of CHAR_SKINS) {
+      this.anims.create({ key: `${skin}-idle-down`, frames: this.anims.generateFrameNumbers(`${skin}-d-idle`, { start: 0, end: 3 }), frameRate: 6, repeat: -1 });
+      this.anims.create({ key: `${skin}-idle-side`, frames: this.anims.generateFrameNumbers(`${skin}-s-idle`, { start: 0, end: 3 }), frameRate: 6, repeat: -1 });
+      this.anims.create({ key: `${skin}-idle-up`, frames: this.anims.generateFrameNumbers(`${skin}-u-idle`, { start: 0, end: 3 }), frameRate: 6, repeat: -1 });
+      this.anims.create({ key: `${skin}-walk-down`, frames: this.anims.generateFrameNumbers(`${skin}-d-walk`, { start: 0, end: 5 }), frameRate: 10, repeat: -1 });
+      this.anims.create({ key: `${skin}-walk-side`, frames: this.anims.generateFrameNumbers(`${skin}-s-walk`, { start: 0, end: 5 }), frameRate: 10, repeat: -1 });
+      this.anims.create({ key: `${skin}-walk-up`, frames: this.anims.generateFrameNumbers(`${skin}-u-walk`, { start: 0, end: 5 }), frameRate: 10, repeat: -1 });
+    }
+
+    // Initialize genre-dependent scripts and state
+    NPC_SCRIPTS = getNpcScripts();
+    gameState.setGenre(selectedGenre);
+
+    this.scene.start('HubScene');
+  }
+}
+
+// ============================================================
+// HUB SCENE
+// ============================================================
+class HubScene extends Phaser.Scene {
+  constructor() {
+    super({ key: 'HubScene' });
+    this.npcs = [];
+    this.allSprites = [];
+    this._progressHandler = null;
+    this._welcomeDismissed = false;
+    this._chatOpen = false;
+    this._facing = 'down';
+    this._playerSkin = 'char1';
+  }
+
+  create() {
+    // ── Tilemap setup ──
+    const map = this.make.tilemap({ key: 'hub' });
+    const terrainTS = map.addTilesetImage('village-terrain');
+    const fenceTS = map.addTilesetImage('village-fences');
+
+    if (!terrainTS) {
+      this.add.text(480, 352, 'Tileset "village-terrain" failed to load', {
+        fontSize: '14px', color: '#ff4444', backgroundColor: '#000000cc', padding: { x: 8, y: 4 },
+      }).setOrigin(0.5).setScrollFactor(0);
+      return;
+    }
+
+    const tilesets = fenceTS ? [terrainTS, fenceTS] : [terrainTS];
+    const groundLayer = map.createLayer('ground', tilesets);
+    const pathsLayer = map.createLayer('paths', tilesets);
+    if (groundLayer) groundLayer.setDepth(0);
+    if (pathsLayer) pathsLayer.setDepth(1);
+
+    // ── Parse objectgroup and spawn everything ──
+    const objectLayer = map.getObjectLayer('objects');
+    if (!objectLayer) {
+      console.error('No "objects" layer found in tilemap');
+      return;
+    }
+
+    let spawnX = WORLD_W / 2, spawnY = WORLD_H / 2;
+    const collidables = [];
+    const buildingSprites = {};
+    const tentSprites = [];
+    const campSprites = [];
+
+    objectLayer.objects.forEach(obj => {
+      const type = obj.type;
+      const sprite = getProp(obj, 'sprite');
+
+      switch (type) {
+        case 'spawn':
+          spawnX = obj.x + (obj.width || 0) / 2;
+          spawnY = obj.y + (obj.height || 0) / 2;
+          break;
+
+        case 'building': {
+          const s = this.physics.add.staticImage(obj.x + obj.width / 2, obj.y + obj.height, sprite);
+          s.setOrigin(0.5, 1);
+          s.body.setSize(getProp(obj, 'collisionW') || obj.width, getProp(obj, 'collisionH') || 40);
+          s.body.setOffset(s.width / 2 - (getProp(obj, 'collisionW') || obj.width) / 2, s.height - (getProp(obj, 'collisionH') || 40));
+          s.setDepth(10 + obj.y + obj.height);
+          collidables.push(s);
+          this.allSprites.push(s);
+          const station = getProp(obj, 'station');
+          if (station) buildingSprites[station] = s;
+          break;
+        }
+
+        case 'tree': {
+          const s = this.physics.add.staticImage(obj.x + (obj.width || 32) / 2, obj.y + (obj.height || 32), sprite);
+          s.setOrigin(0.5, 1);
+          s.body.setSize(24, 20);
+          s.body.setOffset(s.width / 2 - 12, s.height - 32);
+          collidables.push(s);
+          s.setDepth(10 + obj.y + (obj.height || 32));
+          this.allSprites.push(s);
+          break;
+        }
+
+        case 'tent': {
+          const s = this.physics.add.staticImage(obj.x + (obj.width || 32) / 2, obj.y + (obj.height || 32), sprite);
+          s.setOrigin(0.5, 1);
+          if (getProp(obj, 'collidable')) {
+            s.body.setSize(obj.width || 32, 20);
+            s.body.setOffset(0, s.height - 20);
+            collidables.push(s);
+          }
+          s.setDepth(10 + obj.y + (obj.height || 32));
+          this.allSprites.push(s);
+          tentSprites.push(s);
+          break;
+        }
+
+        case 'prop': {
+          const s = this.physics.add.staticImage(obj.x + (obj.width || 16) / 2, obj.y + (obj.height || 16) / 2, sprite);
+          if (getProp(obj, 'collidable')) {
+            collidables.push(s);
+          }
+          s.setDepth(10 + obj.y);
+          this.allSprites.push(s);
+          if (sprite && sprite.startsWith('camp')) campSprites.push(s);
+          break;
+        }
+
+        case 'bush': {
+          const s = this.add.image(obj.x + (obj.width || 16) / 2, obj.y + (obj.height || 16) / 2, sprite);
+          s.setDepth(10 + obj.y);
+          this.allSprites.push(s);
+          break;
+        }
+
+        case 'flower': {
+          const s = this.add.image(obj.x + (obj.width || 8) / 2, obj.y + (obj.height || 8) / 2, sprite);
+          s.setDepth(2); // below most sprites
+          break;
+        }
+
+        case 'npc': {
+          // NPCs are created separately via StationNPC class
+          break;
+        }
+      }
+    });
+
+    // ── Player ──
+    this.player = this.physics.add.sprite(spawnX, spawnY, `${this._playerSkin}-d-idle`);
+    this.player.setCollideWorldBounds(true);
+    this.player.body.setSize(24, 24);
+    this.player.body.setOffset(12, 24);
+    this.player.play(`${this._playerSkin}-idle-down`);
+
+    // Collide player with all collidable objects
+    collidables.forEach(c => this.physics.add.collider(this.player, c));
+
+    // ── NPCs (from objectgroup) ──
+    const npcObjects = objectLayer.objects.filter(o => o.type === 'npc');
+    this.npcs = npcObjects.map(obj => {
+      const station = getProp(obj, 'station');
+      const skin = getProp(obj, 'skin');
+      return new StationNPC(this, { station, skin, x: obj.x, y: obj.y });
+    });
+    this.npcs.forEach(npc => this.physics.add.collider(this.player, npc.sprite));
+
+    // ── Camera ──
+    this.cameras.main.setBounds(0, 0, WORLD_W, WORLD_H);
+    this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
+    this.cameras.main.setZoom(1.5);
+    this.cameras.main.fadeIn(600);
+
+    // ── Input ──
+    this.cursors = this.input.keyboard.createCursorKeys();
+    this.wasd = this.input.keyboard.addKeys({
+      up: Phaser.Input.Keyboard.KeyCodes.W,
+      down: Phaser.Input.Keyboard.KeyCodes.S,
+      left: Phaser.Input.Keyboard.KeyCodes.A,
+      right: Phaser.Input.Keyboard.KeyCodes.D,
+    });
+    this.eKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
+
+    // ── Chat panel + HUD ──
+    this.chatPanel = new ChatPanel();
+    this.hud = new HudOverlay();
+
+    window.addEventListener('chatClosed', () => {
+      this._chatOpen = false;
+      this.cameras.main.startFollow(this.player, true, 0.1, 0.1, 0, 0);
+    });
+
+    // ── Map stations without buildings to nearest tent/camp or NPC sprite as fallback ──
+    const sparkleTargets = [...tentSprites, ...campSprites];
+    this.npcs.forEach(npc => {
+      if (!buildingSprites[npc.id]) {
+        let nearest = null, nearestDist = Infinity;
+        sparkleTargets.forEach(t => {
+          const d = Phaser.Math.Distance.Between(npc.sprite.x, npc.sprite.y, t.x, t.y);
+          if (d < nearestDist) { nearest = t; nearestDist = d; }
+        });
+        buildingSprites[npc.id] = nearest || npc.sprite;
+      }
+    });
+
+    // ── Sparkle emitter for station completion ──
+    this._sparkleTexture = this._createSparkleTexture();
+    this._buildingSprites = buildingSprites;
+    this._progressHandler = ({ stationId }) => {
+      this._emitSparkles(stationId);
+      if (gameState.allStationsComplete()) this._celebrateAllComplete();
+    };
+    gameState.on('progress', this._progressHandler);
+
+    this.physics.world.setBounds(0, 0, WORLD_W, WORLD_H);
+
+    // Position UI overlay
+    this._repositionUI();
+    this.scale.on('resize', () => this._repositionUI());
+    this.events.on('shutdown', this._cleanup, this);
+  }
+
+  update() {
+    if (!this.player) return;
+
+    // Movement
+    const speed = 120;
+    let vx = 0, vy = 0;
+    if (!this._chatOpen) {
+      if (this.cursors.left.isDown || this.wasd.left.isDown) vx = -speed;
+      else if (this.cursors.right.isDown || this.wasd.right.isDown) vx = speed;
+      if (this.cursors.up.isDown || this.wasd.up.isDown) vy = -speed;
+      else if (this.cursors.down.isDown || this.wasd.down.isDown) vy = speed;
+    }
+    this.player.setVelocity(vx, vy);
+
+    // 4-directional animation
+    const skin = this._playerSkin;
+    if (vx !== 0 || vy !== 0) {
+      if (Math.abs(vx) > Math.abs(vy)) {
+        this.player.play(`${skin}-walk-side`, true);
+        this.player.setFlipX(vx < 0);
+        this._facing = 'side';
+      } else if (vy > 0) {
+        this.player.play(`${skin}-walk-down`, true);
+        this.player.setFlipX(false);
+        this._facing = 'down';
+      } else {
+        this.player.play(`${skin}-walk-up`, true);
+        this.player.setFlipX(false);
+        this._facing = 'up';
+      }
+    } else {
+      // Idle
+      const idleKey = `${skin}-idle-${this._facing}`;
+      if (this.player.anims.currentAnim?.key !== idleKey) {
+        this.player.play(idleKey, true);
+      }
+    }
+
+    // Welcome dismiss
+    if (!this._welcomeDismissed && (vx !== 0 || vy !== 0)) {
+      this._welcomeDismissed = true;
+      const welcome = document.getElementById('welcome-overlay');
+      if (welcome) { welcome.style.opacity = '0'; setTimeout(() => welcome.remove(), 500); }
+    }
+
+    // Depth sorting — player
+    this.player.setDepth(10 + this.player.y);
+
+    // NPC depth + interaction
+    let nearestNpc = null;
+    let nearestDist = Infinity;
+
+    this.npcs.forEach(npc => {
+      npc.updateDepth();
+      const dist = Phaser.Math.Distance.Between(this.player.x, this.player.y, npc.sprite.x, npc.sprite.y);
+      if (dist < INTERACT_DIST && !npc.isComplete) {
+        npc.showPrompt();
+        if (dist < nearestDist) { nearestNpc = npc; nearestDist = dist; }
+      } else {
+        npc.hidePrompt();
+      }
+    });
+
+    if (Phaser.Input.Keyboard.JustDown(this.eKey) && nearestNpc && !this._chatOpen) {
+      this._chatOpen = true;
+      this.chatPanel.open(nearestNpc.id);
+      this.cameras.main.startFollow(this.player, true, 0.1, 0.1, -70, 0);
+    }
+  }
+
+  _createSparkleTexture() {
+    const gfx = this.make.graphics({ add: false });
+    gfx.fillStyle(0xffffff, 1);
+    gfx.fillCircle(4, 4, 4);
+    gfx.generateTexture('sparkle', 8, 8);
+    gfx.destroy();
+    return 'sparkle';
+  }
+
+  _playFireworkSound(big = false) {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const now = ctx.currentTime;
+
+    // Burst noise
+    const bufLen = ctx.sampleRate * (big ? 0.6 : 0.3);
+    const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < bufLen; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufLen, big ? 2 : 3);
+
+    const noise = ctx.createBufferSource();
+    noise.buffer = buf;
+
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(big ? 1200 : 2000, now);
+    filter.frequency.exponentialRampToValueAtTime(big ? 300 : 500, now + (big ? 0.5 : 0.25));
+    filter.Q.value = 0.5;
+
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(big ? 0.25 : 0.15, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + (big ? 0.6 : 0.3));
+
+    noise.connect(filter).connect(gain).connect(ctx.destination);
+    noise.start(now);
+    noise.stop(now + (big ? 0.6 : 0.3));
+
+    // Sparkle twinkle
+    const osc = ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(big ? 800 : 1200, now);
+    osc.frequency.exponentialRampToValueAtTime(big ? 2000 : 3000, now + 0.1);
+    osc.frequency.exponentialRampToValueAtTime(big ? 400 : 600, now + (big ? 0.4 : 0.2));
+
+    const oscGain = ctx.createGain();
+    oscGain.gain.setValueAtTime(big ? 0.08 : 0.05, now);
+    oscGain.gain.exponentialRampToValueAtTime(0.001, now + (big ? 0.4 : 0.2));
+
+    osc.connect(oscGain).connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + (big ? 0.5 : 0.25));
+
+    setTimeout(() => ctx.close(), (big ? 1000 : 500));
+  }
+
+  _emitSparkles(stationId) {
+    const building = this._buildingSprites[stationId];
+    if (!building) return;
+    this._playFireworkSound();
+    const emitter = this.add.particles(building.x, building.y - building.height / 2, 'sparkle', {
+      speed: { min: 30, max: 80 },
+      angle: { min: 0, max: 360 },
+      scale: { start: 1, end: 0 },
+      lifespan: 1000,
+      quantity: 20,
+      tint: [0xffd700, 0xffec8b, 0xffffff],
+      duration: 500,
+    });
+    emitter.setDepth(1000);
+  }
+
+  _celebrateAllComplete() {
+    this._playFireworkSound(true);
+    // Big sparkle burst at center
+    const emitter = this.add.particles(WORLD_W / 2, WORLD_H / 2, 'sparkle', {
+      speed: { min: 50, max: 150 },
+      angle: { min: 0, max: 360 },
+      scale: { start: 1.5, end: 0 },
+      lifespan: 1500,
+      quantity: 50,
+      tint: [0xffd700, 0xff6347, 0x00ff00, 0x4169e1],
+      duration: 800,
+    });
+    emitter.setDepth(1000);
+    this.cameras.main.shake(50, 0.005);
+    window.dispatchEvent(new CustomEvent('allStationsComplete'));
+  }
+
+  _repositionUI() {
+    const ui = document.getElementById('game-ui');
+    const canvas = this.game.canvas;
+    if (!ui || !canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    ui.style.left = rect.left + 'px';
+    ui.style.top = rect.top + 'px';
+    ui.style.width = rect.width + 'px';
+    ui.style.height = rect.height + 'px';
+
+    // Center welcome overlay on the map center projected to screen
+    const welcome = document.getElementById('welcome-overlay');
+    if (welcome) {
+      const cam = this.cameras.main;
+      const sx = (WORLD_W / 2 - cam.scrollX) * cam.zoom;
+      const sy = (WORLD_H / 2 - cam.scrollY) * cam.zoom;
+      welcome.style.left = sx + 'px';
+      welcome.style.top = sy + 'px';
+    }
+  }
+
+  _cleanup() {
+    if (this._progressHandler) { gameState.off('progress', this._progressHandler); this._progressHandler = null; }
+    this.npcs.forEach(npc => npc.destroy());
+    this.npcs = [];
+    this.allSprites = [];
+  }
+}
+
+// ============================================================
+// BOOT
+// ============================================================
+const config = {
+  type: Phaser.AUTO,
+  width: 960,
+  height: 704,
+  backgroundColor: '#0e0e1a',
+  pixelArt: true,
+  scale: {
+    mode: Phaser.Scale.RESIZE,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+  },
+  physics: {
+    default: 'arcade',
+    arcade: { gravity: { y: 0 }, debug: false },
+  },
+  scene: [LoadScene, HubScene],
+};
+
+// Build modal button handlers
+document.getElementById('build-copy-btn').addEventListener('click', () => {
+  const text = document.getElementById('build-prompt-text').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('build-copy-btn');
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy Prompt', 2000);
+  });
+});
+document.getElementById('build-close-btn').addEventListener('click', () => {
+  document.getElementById('build-modal').style.display = 'none';
+});
+
+// Wire up deferred boot — game starts only after genre selection
+_bootGame = () => new Phaser.Game(config);
+</script>
+
+</body>
+</html>
