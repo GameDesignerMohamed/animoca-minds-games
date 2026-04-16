@@ -223,6 +223,7 @@ canvas { image-rendering: pixelated; }
   display: flex; justify-content: center; align-items: center;
   z-index: 300;
   font-family: 'Inter', sans-serif;
+  overflow-y: auto;
 }
 .genre-content {
   text-align: center; max-width: 720px; width: 90%; padding: 32px 20px;
