@@ -34,16 +34,24 @@
   <div id="hud-checklist">
     <h3>STATIONS</h3>
     <div class="station-row pending" data-station="design">
-      <span class="station-check"></span> Design Desk
+      <span class="station-chip"></span>
+      <span class="station-label">Design Desk</span>
+      <span class="station-check"></span>
     </div>
     <div class="station-row pending" data-station="art">
-      <span class="station-check"></span> Art Studio
+      <span class="station-chip"></span>
+      <span class="station-label">Art Studio</span>
+      <span class="station-check"></span>
     </div>
     <div class="station-row pending" data-station="sound">
-      <span class="station-check"></span> Sound Booth
+      <span class="station-chip"></span>
+      <span class="station-label">Sound Booth</span>
+      <span class="station-check"></span>
     </div>
     <div class="station-row pending" data-station="code">
-      <span class="station-check"></span> Code Lab
+      <span class="station-chip"></span>
+      <span class="station-label">Code Lab</span>
+      <span class="station-check"></span>
     </div>
   </div>
 
@@ -777,6 +785,84 @@ class GameState {
 }
 const gameState = new GameState();
 
+function getGameCreatorMode() {
+  const genreSelect = document.getElementById('genre-select');
+  const loading = document.getElementById('loading-overlay');
+  const chat = document.getElementById('chat-panel');
+  const buildModal = document.getElementById('build-modal');
+
+  if (genreSelect && getComputedStyle(genreSelect).display !== 'none') return 'genre-picker';
+  if (loading && getComputedStyle(loading).display !== 'none') return 'loading';
+  if (buildModal && getComputedStyle(buildModal).display !== 'none') return 'build-modal';
+  if (chat?.classList.contains('open')) return 'chat';
+  if (window.__gameCreatorHubScene?.scene?.isActive?.()) return 'hub';
+  return 'booting';
+}
+
+function getNearestStationSnapshot(scene) {
+  if (!scene?.player || !scene.npcs?.length) return null;
+  let nearest = null;
+  let nearestDist = Infinity;
+  scene.npcs.forEach(npc => {
+    const dist = Phaser.Math.Distance.Between(scene.player.x, scene.player.y, npc.sprite.x, npc.sprite.y);
+    if (dist < nearestDist) {
+      nearest = npc;
+      nearestDist = dist;
+    }
+  });
+  if (!nearest) return null;
+  return {
+    station: nearest.id,
+    distance: Math.round(nearestDist),
+    interactable: nearestDist < INTERACT_DIST && !nearest.isComplete,
+    complete: nearest.isComplete,
+  };
+}
+
+window.render_game_to_text = () => {
+  const scene = window.__gameCreatorHubScene || null;
+  const velocity = scene?.player?.body?.velocity;
+  const snapshot = {
+    mode: getGameCreatorMode(),
+    selectedGenre,
+    player: scene?.player ? {
+      x: Math.round(scene.player.x),
+      y: Math.round(scene.player.y),
+      facing: scene._facing,
+      moving: Boolean(velocity && (velocity.x || velocity.y)),
+    } : null,
+    progress: { ...gameState.progress },
+    completedCount: gameState.getCompletedCount(),
+    nearestStation: getNearestStationSnapshot(scene),
+  };
+  return JSON.stringify(snapshot, null, 2);
+};
+
+window.advanceTime = (ms = 16) => {
+  const scene = window.__gameCreatorHubScene || null;
+  const game = window.__gameCreatorGame || null;
+  const total = Math.max(0, Math.min(10000, Number(ms) || 0));
+  const step = 1000 / 60;
+  let elapsed = 0;
+  let time = scene?._testClock || performance.now();
+
+  while (elapsed < total) {
+    const delta = Math.min(step, total - elapsed);
+    time += delta;
+    if (game && typeof game.step === 'function') {
+      game.step(time, delta);
+    } else if (scene?.sys?.step) {
+      scene.sys.step(time, delta);
+    } else if (scene?.update) {
+      scene.update(time, delta);
+    }
+    elapsed += delta;
+  }
+
+  if (scene) scene._testClock = time;
+  return window.render_game_to_text();
+};
+
 // ============================================================
 // BUILD PROMPT — Animoca Minds Three.js format
 // ============================================================
@@ -975,10 +1061,10 @@ class StationNPC {
     this.sprite.play(`${config.skin}-idle-down`);
 
     // Quest marker: floating exclamation above NPC (bobbing)
-    this.questMarker = scene.add.image(px, py - 30, 'quest-marker');
-    this.questMarker.setScale(1.5);
+    this.questMarker = scene.add.image(px, py - 34, 'quest-marker');
+    this.questMarker.setScale(0.55);
     scene.tweens.add({
-      targets: this.questMarker, y: py - 36,
+      targets: this.questMarker, y: py - 42,
       duration: 600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
     });
 
@@ -988,10 +1074,8 @@ class StationNPC {
       backgroundColor: '#00000088', padding: { x: 3, y: 1 }
     }).setOrigin(0.5).setVisible(false);
 
-    // Checkmark on completion
-    this.checkmark = scene.add.text(px + 14, py - 20, '✓', {
-      fontSize: '14px', color: '#00ff00'
-    }).setOrigin(0.5).setVisible(false);
+    this.checkmark = scene.add.image(px + 16, py - 26, 'badge-complete');
+    this.checkmark.setScale(0.34).setVisible(false);
 
     this._onProgress = this._handleProgress.bind(this);
     gameState.on('progress', this._onProgress);
@@ -1041,23 +1125,49 @@ const MAP_WIDTH = 30, MAP_HEIGHT = 22, TILE_SIZE = 32;
 const WORLD_W = MAP_WIDTH * TILE_SIZE;  // 960
 const WORLD_H = MAP_HEIGHT * TILE_SIZE; // 704
 const INTERACT_DIST = 80;
-
-// Object asset keys to preload
-const OBJECT_KEYS = [
-  'house1','house2','house3','house4',
-  'tent1','tent2','tent3','tent4',
-  'tree-large','tree-small',
-  'bush1','bush2','bush3','bush4','bush5','bush6',
-  'lamp1','lamp2','lamp3',
-  'box1','box2','box3','box4',
-  'log1','log2',
-  'camp1',
-  'vbox1','vbox2','vbox3',
-  'stone1','stone2','stone3',
-  'flower1','flower2','flower3','flower4','flower5','flower6'
+const HUB_ASSET_BASE = 'src/assets/generated/hub';
+const HUB_TERRAIN_KEY = 'campus-terrain';
+const HUB_STATION_KEYS = {
+  design: 'station-design',
+  art: 'station-art',
+  sound: 'station-sound',
+  code: 'station-code',
+};
+const HUB_PROP_KEYS = [
+  'hub-planter',
+  'hub-neon-pillar',
+  'hub-campus-sign',
+  'hub-divider',
+  'hub-studio-case',
+  'hub-floor-light',
+  'hub-bench',
+  'hub-waypoint',
 ];
-
-const CHAR_SKINS = ['char1', 'char2', 'char3', 'char4'];
+const HUB_UI_KEYS = [
+  'quest-marker',
+  'badge-complete',
+  'badge-build',
+  'sparkle',
+  'asset-design',
+  'asset-art',
+  'asset-sound',
+  'asset-code',
+];
+const CHAR_SKINS = ['creator', 'design-lead', 'art-lead', 'sound-lead', 'code-lead'];
+const CHARACTER_SHEETS = [
+  ['d-idle', 'D_Idle.png'],
+  ['s-idle', 'S_Idle.png'],
+  ['u-idle', 'U_Idle.png'],
+  ['d-walk', 'D_Walk.png'],
+  ['s-walk', 'S_Walk.png'],
+  ['u-walk', 'U_Walk.png'],
+];
+const STATION_SKINS = {
+  design: 'design-lead',
+  art: 'art-lead',
+  sound: 'sound-lead',
+  code: 'code-lead',
+};
 
 // ============================================================
 // LOAD SCENE — preload all assets with progress bar
@@ -1079,30 +1189,27 @@ class LoadScene extends Phaser.Scene {
       document.getElementById('game-ui').style.display = 'block';
     });
 
-    // Terrain tilesets (loaded as images for tilemap)
-    this.load.image('village-terrain', 'src/assets/craftpix/terrain/village-fields.png');
-    this.load.image('village-fences', 'src/assets/craftpix/terrain/village-fences.png');
+    this.load.image(HUB_TERRAIN_KEY, `${HUB_ASSET_BASE}/terrain/campus-tiles.png`);
 
-    // Object sprites
-    OBJECT_KEYS.forEach(key => this.load.image(key, `src/assets/craftpix/objects/${key}.png`));
+    Object.entries(HUB_STATION_KEYS).forEach(([station, key]) => {
+      this.load.image(key, `${HUB_ASSET_BASE}/stations/${station}.png`);
+    });
 
-    // Character spritesheets: 4 skins x 6 sheets
+    HUB_PROP_KEYS.forEach(key => this.load.image(key, `${HUB_ASSET_BASE}/props/${key}.png`));
+    HUB_UI_KEYS.forEach(key => this.load.image(key, `${HUB_ASSET_BASE}/ui/${key}.png`));
+
+    // Character spritesheets: 5 skins x 6 sheets
     for (const skin of CHAR_SKINS) {
-      // Idle: 4 frames of 48x48 = 192x48
-      this.load.spritesheet(`${skin}-d-idle`, `src/assets/craftpix/characters/${skin}/D_Idle.png`, { frameWidth: 48, frameHeight: 48 });
-      this.load.spritesheet(`${skin}-s-idle`, `src/assets/craftpix/characters/${skin}/S_Idle.png`, { frameWidth: 48, frameHeight: 48 });
-      this.load.spritesheet(`${skin}-u-idle`, `src/assets/craftpix/characters/${skin}/U_Idle.png`, { frameWidth: 48, frameHeight: 48 });
-      // Walk: 6 frames of 48x48 = 288x48
-      this.load.spritesheet(`${skin}-d-walk`, `src/assets/craftpix/characters/${skin}/D_Walk.png`, { frameWidth: 48, frameHeight: 48 });
-      this.load.spritesheet(`${skin}-s-walk`, `src/assets/craftpix/characters/${skin}/S_Walk.png`, { frameWidth: 48, frameHeight: 48 });
-      this.load.spritesheet(`${skin}-u-walk`, `src/assets/craftpix/characters/${skin}/U_Walk.png`, { frameWidth: 48, frameHeight: 48 });
+      CHARACTER_SHEETS.forEach(([suffix, filename]) => {
+        this.load.spritesheet(`${skin}-${suffix}`, `${HUB_ASSET_BASE}/characters/${skin}/${filename}`, {
+          frameWidth: 48,
+          frameHeight: 48,
+        });
+      });
     }
 
     // Tilemap
     this.load.tilemapTiledJSON('hub', 'src/assets/maps/hub.json');
-
-    // UI
-    this.load.image('quest-marker', 'src/assets/ui/minimap_icon_exclamation_yellow.png');
 
     this.load.on('loaderror', (file) => {
       console.error(`Failed to load: ${file.key} (${file.url})`);
@@ -1140,25 +1247,27 @@ class HubScene extends Phaser.Scene {
     this._welcomeDismissed = false;
     this._chatOpen = false;
     this._facing = 'down';
-    this._playerSkin = 'char1';
+    this._playerSkin = 'creator';
+    this._nearestStationSnapshot = null;
+    this._testClock = 0;
   }
 
   create() {
+    window.__gameCreatorHubScene = this;
+
     // ── Tilemap setup ──
     const map = this.make.tilemap({ key: 'hub' });
-    const terrainTS = map.addTilesetImage('village-terrain');
-    const fenceTS = map.addTilesetImage('village-fences');
+    const terrainTS = map.addTilesetImage('campus-terrain', HUB_TERRAIN_KEY);
 
     if (!terrainTS) {
-      this.add.text(480, 352, 'Tileset "village-terrain" failed to load', {
+      this.add.text(480, 352, 'Tileset "campus-terrain" failed to load', {
         fontSize: '14px', color: '#ff4444', backgroundColor: '#000000cc', padding: { x: 8, y: 4 },
       }).setOrigin(0.5).setScrollFactor(0);
       return;
     }
 
-    const tilesets = fenceTS ? [terrainTS, fenceTS] : [terrainTS];
-    const groundLayer = map.createLayer('ground', tilesets);
-    const pathsLayer = map.createLayer('paths', tilesets);
+    const groundLayer = map.createLayer('ground', [terrainTS]);
+    const pathsLayer = map.createLayer('paths', [terrainTS]);
     if (groundLayer) groundLayer.setDepth(0);
     if (pathsLayer) pathsLayer.setDepth(1);
 
@@ -1172,8 +1281,6 @@ class HubScene extends Phaser.Scene {
     let spawnX = WORLD_W / 2, spawnY = WORLD_H / 2;
     const collidables = [];
     const buildingSprites = {};
-    const tentSprites = [];
-    const campSprites = [];
 
     objectLayer.objects.forEach(obj => {
       const type = obj.type;
@@ -1188,8 +1295,10 @@ class HubScene extends Phaser.Scene {
         case 'building': {
           const s = this.physics.add.staticImage(obj.x + obj.width / 2, obj.y + obj.height, sprite);
           s.setOrigin(0.5, 1);
-          s.body.setSize(getProp(obj, 'collisionW') || obj.width, getProp(obj, 'collisionH') || 40);
-          s.body.setOffset(s.width / 2 - (getProp(obj, 'collisionW') || obj.width) / 2, s.height - (getProp(obj, 'collisionH') || 40));
+          const collisionW = Math.min(getProp(obj, 'collisionW') || obj.width, s.width);
+          const collisionH = Math.min(getProp(obj, 'collisionH') || 40, s.height);
+          s.body.setSize(collisionW, collisionH);
+          s.body.setOffset((s.width - collisionW) / 2, s.height - collisionH);
           s.setDepth(10 + obj.y + obj.height);
           collidables.push(s);
           this.allSprites.push(s);
@@ -1198,52 +1307,17 @@ class HubScene extends Phaser.Scene {
           break;
         }
 
-        case 'tree': {
-          const s = this.physics.add.staticImage(obj.x + (obj.width || 32) / 2, obj.y + (obj.height || 32), sprite);
-          s.setOrigin(0.5, 1);
-          s.body.setSize(24, 20);
-          s.body.setOffset(s.width / 2 - 12, s.height - 32);
-          collidables.push(s);
-          s.setDepth(10 + obj.y + (obj.height || 32));
-          this.allSprites.push(s);
-          break;
-        }
-
-        case 'tent': {
-          const s = this.physics.add.staticImage(obj.x + (obj.width || 32) / 2, obj.y + (obj.height || 32), sprite);
-          s.setOrigin(0.5, 1);
-          if (getProp(obj, 'collidable')) {
-            s.body.setSize(obj.width || 32, 20);
-            s.body.setOffset(0, s.height - 20);
-            collidables.push(s);
-          }
-          s.setDepth(10 + obj.y + (obj.height || 32));
-          this.allSprites.push(s);
-          tentSprites.push(s);
-          break;
-        }
-
         case 'prop': {
           const s = this.physics.add.staticImage(obj.x + (obj.width || 16) / 2, obj.y + (obj.height || 16) / 2, sprite);
           if (getProp(obj, 'collidable')) {
+            const collisionW = Math.min(getProp(obj, 'collisionW') || obj.width || s.width, s.width);
+            const collisionH = Math.min(getProp(obj, 'collisionH') || obj.height || s.height, s.height);
+            s.body.setSize(collisionW, collisionH);
+            s.body.setOffset((s.width - collisionW) / 2, s.height - collisionH);
             collidables.push(s);
           }
-          s.setDepth(10 + obj.y);
+          s.setDepth(10 + obj.y + (obj.height || 16));
           this.allSprites.push(s);
-          if (sprite && sprite.startsWith('camp')) campSprites.push(s);
-          break;
-        }
-
-        case 'bush': {
-          const s = this.add.image(obj.x + (obj.width || 16) / 2, obj.y + (obj.height || 16) / 2, sprite);
-          s.setDepth(10 + obj.y);
-          this.allSprites.push(s);
-          break;
-        }
-
-        case 'flower': {
-          const s = this.add.image(obj.x + (obj.width || 8) / 2, obj.y + (obj.height || 8) / 2, sprite);
-          s.setDepth(2); // below most sprites
           break;
         }
 
@@ -1251,6 +1325,13 @@ class HubScene extends Phaser.Scene {
           // NPCs are created separately via StationNPC class
           break;
         }
+
+        default:
+          if (sprite) {
+            const s = this.add.image(obj.x + (obj.width || 16) / 2, obj.y + (obj.height || 16) / 2, sprite);
+            s.setDepth(10 + obj.y + (obj.height || 16));
+            this.allSprites.push(s);
+          }
       }
     });
 
@@ -1268,7 +1349,7 @@ class HubScene extends Phaser.Scene {
     const npcObjects = objectLayer.objects.filter(o => o.type === 'npc');
     this.npcs = npcObjects.map(obj => {
       const station = getProp(obj, 'station');
-      const skin = getProp(obj, 'skin');
+      const skin = getProp(obj, 'skin') || STATION_SKINS[station] || 'creator';
       return new StationNPC(this, { station, skin, x: obj.x, y: obj.y });
     });
     this.npcs.forEach(npc => this.physics.add.collider(this.player, npc.sprite));
@@ -1298,21 +1379,8 @@ class HubScene extends Phaser.Scene {
       this.cameras.main.startFollow(this.player, true, 0.1, 0.1, 0, 0);
     });
 
-    // ── Map stations without buildings to nearest tent/camp or NPC sprite as fallback ──
-    const sparkleTargets = [...tentSprites, ...campSprites];
-    this.npcs.forEach(npc => {
-      if (!buildingSprites[npc.id]) {
-        let nearest = null, nearestDist = Infinity;
-        sparkleTargets.forEach(t => {
-          const d = Phaser.Math.Distance.Between(npc.sprite.x, npc.sprite.y, t.x, t.y);
-          if (d < nearestDist) { nearest = t; nearestDist = d; }
-        });
-        buildingSprites[npc.id] = nearest || npc.sprite;
-      }
-    });
-
     // ── Sparkle emitter for station completion ──
-    this._sparkleTexture = this._createSparkleTexture();
+    this._sparkleTexture = 'sparkle';
     this._buildingSprites = buildingSprites;
     this._progressHandler = ({ stationId }) => {
       this._emitSparkles(stationId);
@@ -1379,10 +1447,16 @@ class HubScene extends Phaser.Scene {
     // NPC depth + interaction
     let nearestNpc = null;
     let nearestDist = Infinity;
+    let nearestAnyNpc = null;
+    let nearestAnyDist = Infinity;
 
     this.npcs.forEach(npc => {
       npc.updateDepth();
       const dist = Phaser.Math.Distance.Between(this.player.x, this.player.y, npc.sprite.x, npc.sprite.y);
+      if (dist < nearestAnyDist) {
+        nearestAnyNpc = npc;
+        nearestAnyDist = dist;
+      }
       if (dist < INTERACT_DIST && !npc.isComplete) {
         npc.showPrompt();
         if (dist < nearestDist) { nearestNpc = npc; nearestDist = dist; }
@@ -1391,20 +1465,18 @@ class HubScene extends Phaser.Scene {
       }
     });
 
+    this._nearestStationSnapshot = nearestAnyNpc ? {
+      station: nearestAnyNpc.id,
+      distance: Math.round(nearestAnyDist),
+      interactable: nearestAnyDist < INTERACT_DIST && !nearestAnyNpc.isComplete,
+      complete: nearestAnyNpc.isComplete,
+    } : null;
+
     if (Phaser.Input.Keyboard.JustDown(this.eKey) && nearestNpc && !this._chatOpen) {
       this._chatOpen = true;
       this.chatPanel.open(nearestNpc.id);
       this.cameras.main.startFollow(this.player, true, 0.1, 0.1, -70, 0);
     }
-  }
-
-  _createSparkleTexture() {
-    const gfx = this.make.graphics({ add: false });
-    gfx.fillStyle(0xffffff, 1);
-    gfx.fillCircle(4, 4, 4);
-    gfx.generateTexture('sparkle', 8, 8);
-    gfx.destroy();
-    return 'sparkle';
   }
 
   _playFireworkSound(big = false) {
@@ -1456,7 +1528,7 @@ class HubScene extends Phaser.Scene {
     const building = this._buildingSprites[stationId];
     if (!building) return;
     this._playFireworkSound();
-    const emitter = this.add.particles(building.x, building.y - building.height / 2, 'sparkle', {
+    const emitter = this.add.particles(building.x, building.y - building.height / 2, this._sparkleTexture, {
       speed: { min: 30, max: 80 },
       angle: { min: 0, max: 360 },
       scale: { start: 1, end: 0 },
@@ -1471,7 +1543,7 @@ class HubScene extends Phaser.Scene {
   _celebrateAllComplete() {
     this._playFireworkSound(true);
     // Big sparkle burst at center
-    const emitter = this.add.particles(WORLD_W / 2, WORLD_H / 2, 'sparkle', {
+    const emitter = this.add.particles(WORLD_W / 2, WORLD_H / 2, this._sparkleTexture, {
       speed: { min: 50, max: 150 },
       angle: { min: 0, max: 360 },
       scale: { start: 1.5, end: 0 },
@@ -1548,7 +1620,12 @@ document.getElementById('build-close-btn').addEventListener('click', () => {
 });
 
 // Wire up deferred boot — game starts only after genre selection
-_bootGame = () => new Phaser.Game(config);
+_bootGame = () => {
+  if (!window.__gameCreatorGame) {
+    window.__gameCreatorGame = new Phaser.Game(config);
+  }
+  return window.__gameCreatorGame;
+};
 </script>
 
 </body>
