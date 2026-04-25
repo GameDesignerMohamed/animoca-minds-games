@@ -698,12 +698,44 @@ let selectedGenre = null;
 
 let _bootGame = null; // set later after config is defined
 
+const GENERATED_GENRE_ASSET_BASE = 'src/assets/generated/genres';
+
+function slugifyGenre(name) {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+function getGenreIconPath(name) {
+  return `${GENERATED_GENRE_ASSET_BASE}/${slugifyGenre(name)}.png`;
+}
+
 (function initGenreSelect() {
   const grid = document.getElementById('genre-grid');
   Object.entries(GENRES).forEach(([name, config]) => {
     const card = document.createElement('button');
     card.className = 'genre-card';
-    card.innerHTML = `<span class="genre-emoji">${config.emoji}</span><span class="genre-name">${name}</span><span class="genre-desc">${config.description}</span>`;
+
+    const icon = document.createElement('img');
+    icon.className = 'genre-icon';
+    icon.src = getGenreIconPath(name);
+    icon.alt = '';
+    icon.loading = 'lazy';
+    icon.decoding = 'async';
+    icon.addEventListener('error', () => {
+      const fallback = document.createElement('span');
+      fallback.className = 'genre-emoji';
+      fallback.textContent = config.emoji;
+      icon.replaceWith(fallback);
+    }, { once: true });
+
+    const title = document.createElement('span');
+    title.className = 'genre-name';
+    title.textContent = name;
+
+    const desc = document.createElement('span');
+    desc.className = 'genre-desc';
+    desc.textContent = config.description;
+
+    card.append(icon, title, desc);
     card.addEventListener('click', () => {
       selectedGenre = name;
       document.getElementById('genre-select').style.display = 'none';
