@@ -1415,7 +1415,7 @@ class HubScene extends Phaser.Scene {
     if (vx !== 0 || vy !== 0) {
       if (Math.abs(vx) > Math.abs(vy)) {
         this.player.play(`${skin}-walk-side`, true);
-        this.player.setFlipX(vx < 0);
+        this.player.setFlipX(vx > 0);
         this._facing = 'side';
       } else if (vy > 0) {
         this.player.play(`${skin}-walk-down`, true);

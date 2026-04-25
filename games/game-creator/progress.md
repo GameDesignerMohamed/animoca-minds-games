@@ -21,3 +21,4 @@ Implement the whole art rewrite plan for `games/game-creator`: create `art-rewri
 - Browser QA passed with local server at `http://127.0.0.1:3002/`: 15 genre cards render, hub loads without console errors, keyboard `E` opens station chat, all four station conversations can complete, checklist updates, build button appears, and the build modal includes selected genre and choices.
 - The web-game Playwright client produced valid `render_game_to_text()` state but canvas-only screenshots were black in headless WebGL capture, so full-page Playwright screenshots were used for visual verification.
 - Art-zone planter was moved away from the art lead so the NPC is no longer visually blocked while staying inside the zone.
+- Side movement fix: regenerated the generated hub `S_Walk.png` sheets with visible frame motion and inverted the Phaser side flip rule so left/right face the intended directions.
