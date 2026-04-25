@@ -1126,7 +1126,7 @@ const WORLD_W = MAP_WIDTH * TILE_SIZE;  // 960
 const WORLD_H = MAP_HEIGHT * TILE_SIZE; // 704
 const INTERACT_DIST = 80;
 const HUB_ASSET_BASE = 'src/assets/generated/hub';
-const HUB_ASSET_VERSION = 'campus-side-walk-v2';
+const HUB_ASSET_VERSION = 'campus-side-walk-v4';
 const hubAsset = (path) => `${HUB_ASSET_BASE}/${path}?v=${HUB_ASSET_VERSION}`;
 const HUB_TERRAIN_KEY = 'campus-terrain';
 const HUB_STATION_KEYS = {
@@ -1417,7 +1417,7 @@ class HubScene extends Phaser.Scene {
     if (vx !== 0 || vy !== 0) {
       if (Math.abs(vx) > Math.abs(vy)) {
         this.player.play(`${skin}-walk-side`, true);
-        this.player.setFlipX(vx > 0);
+        this.player.setFlipX(vx < 0);
         this._facing = 'side';
       } else if (vy > 0) {
         this.player.play(`${skin}-walk-down`, true);

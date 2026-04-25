@@ -22,3 +22,5 @@ Implement the whole art rewrite plan for `games/game-creator`: create `art-rewri
 - The web-game Playwright client produced valid `render_game_to_text()` state but canvas-only screenshots were black in headless WebGL capture, so full-page Playwright screenshots were used for visual verification.
 - Art-zone planter was moved away from the art lead so the NPC is no longer visually blocked while staying inside the zone.
 - Side movement fix: regenerated the generated hub `S_Walk.png` sheets with visible frame motion and inverted the Phaser side flip rule so left/right face the intended directions.
+- Follow-up side-walk correction: rebuilt all five hub `S_Walk.png` sheets from intact source side poses, mirrored the opposite pose for alternating frames, cleaned green-screen spill, and bumped the runtime asset version to `campus-side-walk-v4`.
+- QA for `campus-side-walk-v4`: module script parses, `hub.json` still validates, no CraftPix/v3/old flip references remain, and Playwright confirmed `creator-walk-side` advances frames while moving right/left with `flipX=false` for right and `flipX=true` for left.
