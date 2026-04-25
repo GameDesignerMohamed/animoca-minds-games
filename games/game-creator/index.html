@@ -1126,6 +1126,8 @@ const WORLD_W = MAP_WIDTH * TILE_SIZE;  // 960
 const WORLD_H = MAP_HEIGHT * TILE_SIZE; // 704
 const INTERACT_DIST = 80;
 const HUB_ASSET_BASE = 'src/assets/generated/hub';
+const HUB_ASSET_VERSION = 'campus-side-walk-v2';
+const hubAsset = (path) => `${HUB_ASSET_BASE}/${path}?v=${HUB_ASSET_VERSION}`;
 const HUB_TERRAIN_KEY = 'campus-terrain';
 const HUB_STATION_KEYS = {
   design: 'station-design',
@@ -1189,19 +1191,19 @@ class LoadScene extends Phaser.Scene {
       document.getElementById('game-ui').style.display = 'block';
     });
 
-    this.load.image(HUB_TERRAIN_KEY, `${HUB_ASSET_BASE}/terrain/campus-tiles.png`);
+    this.load.image(HUB_TERRAIN_KEY, hubAsset('terrain/campus-tiles.png'));
 
     Object.entries(HUB_STATION_KEYS).forEach(([station, key]) => {
-      this.load.image(key, `${HUB_ASSET_BASE}/stations/${station}.png`);
+      this.load.image(key, hubAsset(`stations/${station}.png`));
     });
 
-    HUB_PROP_KEYS.forEach(key => this.load.image(key, `${HUB_ASSET_BASE}/props/${key}.png`));
-    HUB_UI_KEYS.forEach(key => this.load.image(key, `${HUB_ASSET_BASE}/ui/${key}.png`));
+    HUB_PROP_KEYS.forEach(key => this.load.image(key, hubAsset(`props/${key}.png`)));
+    HUB_UI_KEYS.forEach(key => this.load.image(key, hubAsset(`ui/${key}.png`)));
 
     // Character spritesheets: 5 skins x 6 sheets
     for (const skin of CHAR_SKINS) {
       CHARACTER_SHEETS.forEach(([suffix, filename]) => {
-        this.load.spritesheet(`${skin}-${suffix}`, `${HUB_ASSET_BASE}/characters/${skin}/${filename}`, {
+        this.load.spritesheet(`${skin}-${suffix}`, hubAsset(`characters/${skin}/${filename}`), {
           frameWidth: 48,
           frameHeight: 48,
         });
