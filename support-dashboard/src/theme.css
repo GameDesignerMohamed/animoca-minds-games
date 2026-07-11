@@ -1,0 +1,82 @@
+@import "tailwindcss";
+
+:root {
+  /* surfaces & ink — light */
+  --surface-1: #fcfcfb;
+  --page: #f9f9f7;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #898781;
+  --grid: #e1e0d9;
+  --axis: #c3c2b7;
+  --border: rgba(11, 11, 11, 0.1);
+  --delta-good: #006300;
+  --delta-bad: #d03b3b;
+
+  /* series colors follow the entity, never the chart */
+  --c-bf: #2a78d6;       /* body fat %          — blue   */
+  --c-smm: #1baf7a;      /* skeletal muscle     — aqua   */
+  --c-recovery: #2a78d6; /* whoop recovery      — blue   */
+  --c-lift: #2a78d6;     /* lift sessions       — blue   */
+  --c-run: #1baf7a;      /* run sessions        — aqua   */
+  --c-essays: #2a78d6;   /* essays shipped      — blue   */
+  --c-therapy: #4a3aa7;  /* therapy sessions    — violet */
+  --c-physio: #eb6834;   /* physio sessions     — orange */
+  --c-sleep: #4a3aa7;    /* sleep hours         — violet */
+  --c-strain: #eb6834;   /* whoop strain        — orange */
+  --c-a: #2a78d6;        /* correlation panel A — blue   */
+  --c-b: #1baf7a;        /* correlation panel B — aqua   */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --surface-1: #1a1a19;
+    --page: #0d0d0d;
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted: #898781;
+    --grid: #2c2c2a;
+    --axis: #383835;
+    --border: rgba(255, 255, 255, 0.1);
+    --delta-good: #0ca30c;
+    --delta-bad: #e66767;
+
+    --c-bf: #3987e5;
+    --c-smm: #199e70;
+    --c-recovery: #3987e5;
+    --c-lift: #3987e5;
+    --c-run: #199e70;
+    --c-essays: #3987e5;
+    --c-therapy: #9085e9;
+    --c-physio: #d95926;
+    --c-sleep: #9085e9;
+    --c-strain: #d95926;
+    --c-a: #3987e5;
+    --c-b: #199e70;
+  }
+}
+
+html,
+body {
+  background: var(--page);
+  color: var(--text-primary);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+/* recharts chrome: recessive hairlines, text tokens */
+.recharts-cartesian-grid line {
+  stroke: var(--grid);
+  stroke-width: 1;
+}
+.recharts-cartesian-axis-line,
+.recharts-cartesian-axis-tick-line {
+  stroke: var(--axis);
+}
+.recharts-text {
+  fill: var(--text-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.recharts-reference-line line {
+  stroke: var(--axis);
+}
