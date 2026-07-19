@@ -148,11 +148,3 @@ const PROGRAM = {
     'InBody every 3–4 weeks. Expect 12–24 weeks for the visible shift.',
   ],
 };
-
-/* Main lifts tracked in the log, in display order. */
-const MAIN_LIFTS = [
-  { key: 'bench', name: 'Bench press', inc: 2.5, dayId: 'd1' },
-  { key: 'chin',  name: 'Weighted chin-ups', inc: 2.5, dayId: 'd1' },
-  { key: 'squat', name: 'Back squat', inc: 5, dayId: 'd3' },
-  { key: 'ohp',   name: 'Standing OHP', inc: 2.5, dayId: 'd5' },
-];

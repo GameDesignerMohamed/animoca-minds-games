@@ -127,8 +127,6 @@ input, select { font: inherit; color: inherit; }
   width: 6px; height: 6px; border-radius: 50%; background: var(--volt);
 }
 .daybtn.is-active.is-today::after { background: var(--ink); }
-.daybtn.is-done .dn { color: var(--green); }
-.daybtn.is-active.is-done .dn { color: inherit; }
 
 /* ---------- session view ---------- */
 
@@ -154,18 +152,6 @@ input, select { font: inherit; color: inherit; }
 }
 
 .session-sub { color: var(--dust); font-size: 14px; margin-bottom: 14px; }
-
-.target-note {
-  display: inline-block;
-  margin-top: 8px;
-  font-weight: 700; font-size: 13.5px;
-  letter-spacing: .04em;
-  color: var(--volt);
-  border: 1px solid rgba(216,255,62,.35);
-  border-radius: 6px;
-  padding: 3px 8px;
-  background: rgba(216,255,62,.05);
-}
 
 /* exercise card */
 
@@ -198,7 +184,7 @@ input, select { font: inherit; color: inherit; }
 .xnotes li::before { content: '—'; position: absolute; left: 0; color: var(--faint); }
 
 .gate-note {
-  margin: 8px 14px 0; padding: 7px 10px;
+  margin: 0 14px 13px; padding: 7px 10px;
   font-size: 13.5px; font-weight: 600;
   color: var(--green); border-left: 3px solid var(--green);
   background: rgba(89,224,139,.06);
@@ -212,109 +198,13 @@ input, select { font: inherit; color: inherit; }
   padding: 3px 8px 2px; border-radius: 4px;
 }
 
-/* main-lift logging */
+/* exercise list rows */
 
-.loadrow {
-  display: flex; align-items: center; gap: 10px;
-  padding: 12px 14px 2px;
-}
-.loadrow label { font-size: 12px; font-weight: 700; letter-spacing: .12em; color: var(--faint); text-transform: uppercase; }
-.kg-input {
-  width: 96px;
-  background: var(--ink);
-  border: 1px solid var(--seam-hi);
-  border-radius: 8px;
-  padding: 8px 10px;
-  font-family: var(--disp);
-  font-size: 22px;
-  letter-spacing: .03em;
-  color: var(--volt);
-  text-align: center;
-  font-variant-numeric: tabular-nums;
-}
-.kg-input:focus { outline: 2px solid var(--volt); outline-offset: 1px; }
-.kg-unit { font-family: var(--disp); font-size: 14px; color: var(--faint); }
-
-.setgrid { padding: 10px 14px 14px; display: grid; gap: 7px; }
-
-.setrow {
-  display: grid;
-  grid-template-columns: 30px 1fr auto;
-  align-items: center; gap: 10px;
-}
-.set-n { font-family: var(--disp); font-size: 15px; color: var(--faint); }
-.setrow.is-logged .set-n { color: var(--volt); }
-
-.rep-stepper { display: flex; align-items: center; gap: 0; }
-.step-btn {
-  width: 42px; height: 40px;
-  background: var(--plate);
-  border: 1px solid var(--seam-hi);
-  font-family: var(--disp); font-size: 18px;
-  color: var(--dust);
-  display: grid; place-items: center;
-}
-.step-btn:first-child { border-radius: 8px 0 0 8px; }
-.step-btn:last-child { border-radius: 0 8px 8px 0; }
-.step-btn:active { background: var(--seam-hi); }
-.rep-val {
-  min-width: 52px; height: 40px;
-  display: grid; place-items: center;
-  background: var(--ink);
-  border-top: 1px solid var(--seam-hi); border-bottom: 1px solid var(--seam-hi);
-  font-family: var(--disp); font-size: 20px;
-  font-variant-numeric: tabular-nums;
-}
-.setrow.is-logged .rep-val { color: var(--volt); }
-.rep-val.is-empty { color: var(--faint); font-size: 15px; }
-
-.rpe-select {
-  height: 40px;
-  background: var(--plate);
-  border: 1px solid var(--seam-hi);
-  border-radius: 8px;
-  padding: 0 8px;
-  font-weight: 700; font-size: 14px;
-  color: var(--dust);
-  appearance: none;
-}
-.rpe-select.is-hot { color: var(--red); border-color: rgba(255,77,77,.5); }
-
-/* accessory logging */
-
-.acc { padding: 12px 14px 14px; display: grid; gap: 10px; }
+.acc { padding: 12px 14px 13px; display: grid; gap: 10px; }
 .accrow { display: grid; grid-template-columns: 1fr auto; gap: 8px 12px; align-items: center; }
 .acc-name { font-weight: 600; font-size: 15.5px; }
 .acc-name small { display: block; font-weight: 500; font-size: 12.5px; color: var(--faint); }
 .acc-scheme { font-size: 13px; font-weight: 700; color: var(--dust); white-space: nowrap; }
-.acc-ctrl { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; }
-
-.setdots { display: flex; gap: 6px; }
-.dot {
-  width: 34px; height: 34px;
-  border: 1px solid var(--seam-hi);
-  border-radius: 50%;
-  background: var(--plate);
-  font-family: var(--disp); font-size: 13px;
-  color: var(--faint);
-  display: grid; place-items: center;
-  transition: transform .1s;
-}
-.dot.is-on { background: var(--volt); border-color: var(--volt); color: var(--ink); }
-.dot:active { transform: scale(.9); }
-
-.acc-load {
-  margin-left: auto;
-  width: 76px;
-  background: var(--ink);
-  border: 1px solid var(--seam);
-  border-radius: 8px;
-  padding: 6px 8px;
-  font-size: 14px; font-weight: 600;
-  color: var(--chalk);
-  text-align: center;
-}
-.acc-load::placeholder { color: var(--faint); font-weight: 400; }
 
 /* rest chip + card footer */
 
@@ -332,10 +222,6 @@ input, select { font: inherit; color: inherit; }
 }
 .rest-chip::before { content: '◔ '; color: var(--volt); }
 .rest-chip:active { background: var(--seam-hi); }
-
-.progress-flag { font-size: 13px; font-weight: 700; letter-spacing: .03em; }
-.progress-flag.pass { color: var(--volt); }
-.progress-flag.wait { color: var(--faint); }
 
 /* run / off days */
 
@@ -362,42 +248,6 @@ input, select { font: inherit; color: inherit; }
   margin-bottom: 14px;
 }
 .caution strong { letter-spacing: .05em; }
-
-.finish-btn {
-  width: 100%;
-  margin: 6px 0 20px;
-  padding: 15px;
-  font-family: var(--disp);
-  font-size: 19px; letter-spacing: .1em;
-  color: var(--ink);
-  background: var(--volt);
-  border-radius: var(--radius);
-  box-shadow: 0 3px 0 var(--volt-dim);
-}
-.finish-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--volt-dim); }
-.finish-btn[disabled] { background: var(--seam); color: var(--faint); box-shadow: none; }
-.finish-btn.is-done { background: var(--green); box-shadow: 0 3px 0 #2f9c5d; }
-
-/* ---------- log tab ---------- */
-
-.log-section { margin-top: 22px; }
-.log-lift-name { font-family: var(--disp); font-size: 22px; text-transform: uppercase; letter-spacing: .02em; }
-.log-next { font-size: 13px; font-weight: 700; color: var(--volt); margin: 2px 0 8px; }
-
-.log-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-.log-table td {
-  border-top: 1px solid var(--seam);
-  padding: 8px 4px;
-  font-size: 14.5px;
-}
-.log-date { color: var(--faint); font-size: 13px; white-space: nowrap; }
-.log-kg { font-family: var(--disp); font-size: 17px; color: var(--chalk); white-space: nowrap; }
-.log-reps { color: var(--dust); letter-spacing: .05em; }
-.log-verdict { text-align: right; font-weight: 800; }
-.log-verdict.pass { color: var(--volt); }
-.log-verdict.fail { color: var(--faint); }
-
-.log-empty { color: var(--faint); font-size: 14px; border: 1px dashed var(--seam-hi); border-radius: var(--radius); padding: 14px; margin-top: 6px; }
 
 /* ---------- rules tab ---------- */
 
@@ -448,7 +298,6 @@ input, select { font: inherit; color: inherit; }
   background: var(--ink); border: 1px solid var(--seam-hi); border-radius: 8px;
   padding: 8px 10px; font-weight: 600; color: var(--chalk);
 }
-.danger-btn { color: var(--red); font-weight: 700; font-size: 14px; padding: 10px 0; }
 
 /* ---------- rest bar ---------- */
 
@@ -499,7 +348,7 @@ input, select { font: inherit; color: inherit; }
   left: 50%; transform: translateX(-50%);
   bottom: 0;
   width: 100%; max-width: 620px;
-  display: grid; grid-template-columns: repeat(3, 1fr);
+  display: grid; grid-template-columns: repeat(2, 1fr);
   background: rgba(11,11,13,.92);
   backdrop-filter: blur(10px);
   border-top: 1px solid var(--seam);

@@ -1,7 +1,7 @@
 /* RECOMP service worker — offline-first. */
 'use strict';
 
-const VERSION = 'recomp-v1';
+const VERSION = 'recomp-v2';
 const CORE = [
   './',
   'index.html',

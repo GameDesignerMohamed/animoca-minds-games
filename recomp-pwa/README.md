@@ -2,18 +2,15 @@
 
 The recomp training program (13.5% → 12% body fat · maintain weight · gain muscle) as an installable, offline-first PWA.
 
-No build step, no dependencies, no backend. All training data lives in `localStorage` on your device.
+No build step, no dependencies, no backend, no tracking — a clean program reference that lives on your home screen.
 
 ## Features
 
-- **7-day week view** — Upper A / Run / Lower / Core / Upper B / Run / Off, with today's session auto-highlighted and finished days ticked off.
-- **5×5 logging** — tap `+` once to log a full set at target reps, adjust reps/RPE from there. Load input per lift.
-- **Automatic progression** — all 25 reps at RPE ≤ 8 → next session's target shows `+2.5 kg` (upper) / `+5 kg` (lower); otherwise "repeat load". Prefills the load input next time.
-- **Accessory tracking** — set dots per exercise, last-used load remembered across sessions.
+- **7-day week view** — Upper A / Run / Lower / Core / Upper B / Run / Off, with today's session auto-highlighted.
+- **Every session at a glance** — lifts with sets × reps and rest, supersets grouped, ramp/swap/backup notes, the hip-thrust recovery gate, and the shoulder caution where it matters.
 - **Rest timers** — one tap per block (3–4 min mains, 60–90 s supersets), ring countdown, +30 s, beep + vibration at zero.
 - **Week counter & deload** — set your program start date once; week 6 of every 6-week block shows the deload banner (half the sets, same loads).
-- **The Log** — per-lift history with load, rep string, and pass/repeat verdict, plus the next target.
-- **Rules & banned list** — the five rules, banned/frozen exercises, and the shoulder protocol, always one tap away.
+- **Rules & banned list** — the five rules, banned/frozen exercises, and tracking guidance, one tap away.
 - **Offline-first** — service worker precaches everything; works airplane-mode in the gym basement. Installable to the home screen (standalone, portrait).
 
 ## Run it
@@ -33,7 +30,7 @@ Or deploy the folder as-is to GitHub Pages / Netlify / Vercel — all paths are 
 index.html            app shell
 css/app.css           all styling
 js/program.js         the program as data (days, lifts, rules)
-js/app.js             logging, progression, timers, rendering
+js/app.js             rendering, timers, week math
 sw.js                 offline cache (bump VERSION to ship updates)
 manifest.webmanifest  install metadata
 icons/                generated barbell mark
