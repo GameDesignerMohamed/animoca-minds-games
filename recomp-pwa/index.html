@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>RECOMP · 7-Day Week</title>
+  <meta name="description" content="Recomp training program — 13.5% → 12% body fat. Session tracking, 5×5 progression, rest timers. Works offline.">
+  <meta name="theme-color" content="#0b0b0d">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="RECOMP">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Semi+Condensed:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+
+  <header class="masthead">
+    <div class="masthead-row">
+      <h1 class="wordmark">RE<span>COMP</span></h1>
+      <button id="weekChip" class="week-chip" type="button" title="Program week — tap for settings">WK —</button>
+    </div>
+    <p class="phase-line" id="phaseLine"></p>
+    <div id="deloadBanner" class="deload-banner" hidden>
+      <strong>WEEK 6 — DELOAD.</strong> Half the sets, same loads. Non-negotiable in a deficit.
+    </div>
+  </header>
+
+  <nav class="daynav" id="dayNav" aria-label="Days of the week"></nav>
+
+  <main id="view" class="view" tabindex="-1"></main>
+
+  <div id="restBar" class="rest-bar" hidden>
+    <div class="rest-ring">
+      <svg viewBox="0 0 44 44" aria-hidden="true">
+        <circle class="ring-track" cx="22" cy="22" r="19"></circle>
+        <circle class="ring-fill" id="ringFill" cx="22" cy="22" r="19"></circle>
+      </svg>
+      <span id="restClock" class="rest-clock">0:00</span>
+    </div>
+    <div class="rest-meta">
+      <span class="rest-label">REST</span>
+      <span id="restFor" class="rest-for"></span>
+    </div>
+    <button id="restAdd" class="rest-btn" type="button">+30s</button>
+    <button id="restSkip" class="rest-btn rest-skip" type="button">SKIP</button>
+  </div>
+
+  <nav class="tabbar" aria-label="Sections">
+    <button class="tab is-active" data-tab="train" type="button">
+      <span class="tab-glyph">▮▮</span>TRAIN
+    </button>
+    <button class="tab" data-tab="log" type="button">
+      <span class="tab-glyph">↗</span>LOG
+    </button>
+    <button class="tab" data-tab="rules" type="button">
+      <span class="tab-glyph">§</span>RULES
+    </button>
+  </nav>
+
+  <script src="js/program.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
