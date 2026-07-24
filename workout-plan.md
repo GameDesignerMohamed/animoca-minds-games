@@ -2,7 +2,7 @@
 
 All sets taken to failure at ~9 reps, progressing with weight over time (progressive overload for hypertrophy).
 
-## Upper Body (2x/week)
+## Upper Body
 
 - 2x incline bench press
 - 2x chest flyes
@@ -12,7 +12,7 @@ All sets taken to failure at ~9 reps, progressing with weight over time (progres
 - 2x shoulder press
 - 2x tricep rope pull down
 
-## Lower Body (1x/week)
+## Lower Body
 
 - 3x barbell back squat
 - 3x leg press
@@ -22,7 +22,7 @@ All sets taken to failure at ~9 reps, progressing with weight over time (progres
 - 3x walking lunges
 - 3x standing calf raises
 
-## Core (2–3x/week, end of any session)
+## Core
 
 **Lower abs**
 
